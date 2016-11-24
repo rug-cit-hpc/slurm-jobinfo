@@ -1,8 +1,10 @@
 #!/bin/env python
+# -*- coding: utf-8 -*-
 #
 # jobinfo - collect job information from slurm in nicely readable format
 #
 # Copyright 2015 Anders Halager <aeh@birc.au.dk>
+# More functionality added by Bob Dröge <b.e.droge@rug.nl>
 #
 # LICENSE: MIT
 
