@@ -146,7 +146,7 @@ def efficiency(meta):
     if cputime_secs == 0 or walltime_secs == 0 or ncpus == 0:
         eff = 0
     else:
-        eff = 100 * elapsed_to_seconds(meta.TotalCPU) / (meta.ncpus * elapsed_to_seconds(meta.elapsed))
+        eff = 100 * cputime_secs / (ncpus * walltime_secs)
     return eff
 
 def whoami():
