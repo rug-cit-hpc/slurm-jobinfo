@@ -118,7 +118,7 @@ def f_time(x, meta):
 def f_cputime(x, meta):
     res = f_time(x, meta)
     if res != "--":
-        res += " (efficiency: %5.2f%%)" % efficiency(meta)
+        res += " (efficiency: %5.2f%%)" % cpu_efficiency(meta)
     return res
     
 def f_str(x, meta):
@@ -139,7 +139,7 @@ def f_state(x, meta):
         deps = " (%s)" % deps
     return ','.join(states) + reason + deps
     
-def efficiency(meta):
+def cpu_efficiency(meta):
     cputime_secs = elapsed_to_seconds(meta.TotalCPU)
     walltime_secs = elapsed_to_seconds(meta.elapsed)
     ncpus = meta.ncpus
