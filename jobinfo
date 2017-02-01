@@ -79,8 +79,10 @@ def elapsed_to_seconds(elapsed):
 
 def f_rss(x, meta):
     return "%s (%s)" % (format_bs(x), meta.MaxRSSNode)
+
 def f_dw(x, meta):
     return "%s (%s)" % (format_bs(x), meta.MaxDiskWriteNode)
+
 def f_dr(x, meta):
     return "%s (%s)" % (format_bs(x), meta.MaxDiskReadNode)
 
@@ -123,10 +125,12 @@ def f_cputime(x, meta):
     
 def f_str(x, meta):
     return str(x)
+
 def f_date(x, meta):
     if str(x).lower() == "unknown":
         return "--"
     return str(x)
+
 def f_state(x, meta):
     states = set(x.split(","))
     if len(states) > 1:
