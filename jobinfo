@@ -231,7 +231,7 @@ def main(jobid):
             ys.append(combine(tmp))
     if meta.State == "PENDING":
         info = subprocess.Popen(['squeue', '--format=%E;%R', '--noheader', '-a', '-j', jobid], stdout=subprocess.PIPE)
-        deps, reason = info.stdout.readline().strip().split(";")
+        deps, reason = info.stdout.readline().decode('utf-8').strip().split(";")
         dependencies = deps
     else:
         dependencies = ""
@@ -253,7 +253,7 @@ and historical jobs.
 Usage:
     jobinfo <job id>
 
-Report problems to hpc-beheer@list.rug.nl"""
+Report problems to hpc@rug.nl"""
 
     print(usage_msg, file=pipe)
 

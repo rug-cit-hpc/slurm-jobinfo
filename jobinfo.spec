@@ -1,5 +1,5 @@
 Name: jobinfo
-Version: 13dec2016
+Version: 6jun2018
 Release: 1
 Summary: Collect job information from SLURM in nicely readable format.
 
