@@ -5,25 +5,34 @@
 #
 # Copyright 2015 Anders Halager <aeh@birc.au.dk>
 # More functionality added by Bob Dröge <b.e.droge@rug.nl>
+# and Egon Rijpkema <e.m.a.rijpkema@rug.nl>
 #
 # LICENSE: MIT
 
 from __future__ import print_function
+from __future__ import division
+from collections import namedtuple as NT
+import datetime
+import json
 import math
 import os
+import pwd
 import re
+import requests
 import subprocess
 import sys
 import time
-from collections import namedtuple as NT
+
 
 def append(l, x):
     if l == '':
         return x
     return ','.join(sorted(set(l.split(',') + [x])))
 
+
 def keep_first(a, b):
     return a == '' and b or a
+
 
 def time_max(a, b):
     if 'UNLIMITED' in [a, b]:
@@ -34,6 +43,7 @@ def time_max(a, b):
         return a
     return max(a, b)
 
+
 def time_min(a, b):
     if a in ['', 'INVALID', 'UNLIMITED']:
         return b
@@ -41,28 +51,34 @@ def time_min(a, b):
         return a
     return max(a, b)
 
+
 def byte_size(s=None):
     if s is None or s == "16?":
         return 0.0
     m = {'K': 10, 'M': 20, 'G': 30, 'T': 40, 'P': 50, 'E': 60}
-    scale = 2 ** m.get(s[-1], 0)
+    scale = 2**m.get(s[-1], 0)
     if scale != 1:
         s = s[:-1]
     return scale * float(s)
+
 
 def date_str(s=None):
     if s is None or s.strip() == "":
         return "9999-01-01T00:00:00"
     return s
 
+
 def format_bs(x):
     postfix = ' KMGTPE'
-    e = int(math.log(x+1, 2)/10)
-    return "%.2f%s" % (x / 2**(10*e), postfix[e])
+    e = int(math.log(x + 1, 2) / 10)
+    return "%.2f%s" % (x / 2**(10 * e), postfix[e])
+
 
 # Format: [DD-[hh:]]mm:ss
 time_parts = re.compile(r'(((?P<days>\d+)-)?(?P<hours>\d\d):)?' +
                         r'(?P<minutes>\d\d):(?P<seconds>\d\d(\.\d+)?)')
+
+
 def parse_time(t):
     m = time_parts.match(t)
     if m is None:
@@ -73,23 +89,31 @@ def parse_time(t):
     dd = int(m.group('days') or '0')
     return ss, mm, hh, dd
 
+
 def elapsed_to_seconds(elapsed):
     ss, mm, hh, dd = parse_time(elapsed)
-    return dd*24*60*60 + hh*60*60 + mm*60 + ss
+    return dd * 24 * 60 * 60 + hh * 60 * 60 + mm * 60 + ss
+
 
 def f_rss(x, meta):
     return "%s (%s)" % (format_bs(x), meta.MaxRSSNode)
+
+
 def f_dw(x, meta):
     return "%s (%s)" % (format_bs(x), meta.MaxDiskWriteNode)
+
+
 def f_dr(x, meta):
     return "%s (%s)" % (format_bs(x), meta.MaxDiskReadNode)
+
 
 def f_cpu(x, meta):
     total = elapsed_to_seconds(meta.TotalCPU)
     if total == 0:
         return "--"
     xp = elapsed_to_seconds(x)
-    return "%5.2f%%" % (xp/total*100)
+    return "%5.2f%%" % (xp / total * 100)
+
 
 def f_mem(x, meta):
     if x.endswith('c'):
@@ -98,6 +122,7 @@ def f_mem(x, meta):
         return "%s/node" % (x[:-1])
     else:
         return x
+
 
 def f_time(x, meta):
     all_times = [meta.timelimit, meta.elapsed, meta.TotalCPU, '-']
@@ -109,24 +134,30 @@ def f_time(x, meta):
         if dd > 0:
             dd = ("%i-" % dd).rjust(days_len)
         else:
-            dd = " "*(days_len + 1)
+            dd = " " * (days_len + 1)
     res = "%s%02i:%02i:%02i" % (dd, hh, mm, ss)
     if res.strip() == "00:00:00":
         return "--"
     return res
+
 
 def f_cputime(x, meta):
     res = f_time(x, meta)
     if res != "--":
         res += " (efficiency: %5.2f%%)" % efficiency(meta)
     return res
-    
+
+
 def f_str(x, meta):
     return str(x)
+
+
 def f_date(x, meta):
     if str(x).lower() == "unknown":
         return "--"
     return str(x)
+
+
 def f_state(x, meta):
     states = set(x.split(","))
     if len(states) > 1:
@@ -138,7 +169,8 @@ def f_state(x, meta):
     if deps != '':
         deps = " (%s)" % deps
     return ','.join(states) + reason + deps
-    
+
+
 def efficiency(meta):
     cputime_secs = elapsed_to_seconds(meta.TotalCPU)
     walltime_secs = elapsed_to_seconds(meta.elapsed)
@@ -146,12 +178,14 @@ def efficiency(meta):
     if cputime_secs == 0 or walltime_secs == 0 or ncpus == 0:
         eff = 0
     else:
-        eff = 100 * elapsed_to_seconds(meta.TotalCPU) / (meta.ncpus * elapsed_to_seconds(meta.elapsed))
+        eff = 100 * elapsed_to_seconds(
+            meta.TotalCPU) / (meta.ncpus * elapsed_to_seconds(meta.elapsed))
     return eff
 
+
 def whoami():
-    import pwd
     return pwd.getpwuid(os.getuid()).pw_name
+
 
 Field = NT('Field', 'name ctor combinator shown prefer_live formatter desc')
 FIELDS = [
@@ -188,6 +222,7 @@ FORMAT_STR = "--format=%s" % (",".join(FIELD_NAMES))
 FORMAT_LIVE_STR = "--format=%s" % (",".join(FIELD_NAMES_LIVE))
 Meta = NT('Meta', FIELD_NAMES + ['dependencies', 'reason'])
 
+
 def combine(xs):
     r = xs[0]
     for x in xs[1:]:
@@ -195,17 +230,30 @@ def combine(xs):
             r[i] = comb(r[i], x[i])
     return r
 
+
 def get_values(jobid):
-    info = subprocess.Popen(['sacct', FORMAT_STR, '--parsable', '--noheader', '-j', jobid], stdout=subprocess.PIPE)
+    info = subprocess.Popen(
+        ['sacct', FORMAT_STR, '--parsable', '--noheader', '-j', jobid],
+        stdout=subprocess.PIPE)
     xs = []
     for line in info.stdout:
-        xs.append([(s != "" and ctor(s) or ctor()) for ctor, s in zip(FIELD_CTORS, line.decode('utf-8').strip().split('|'))])
+        xs.append(
+            [(s != "" and ctor(s) or ctor())
+             for ctor, s in zip(FIELD_CTORS,
+                                line.decode('utf-8').strip().split('|'))])
     if len(xs) == 0:
         print("No such job", file=sys.stderr)
         sys.exit(1)
     return xs
+
+
 def get_live_values(jobid):
-    info = subprocess.Popen(['sstat', FORMAT_LIVE_STR, '--parsable', '--noheader', '-a', '-j', jobid], stdout=subprocess.PIPE)
+    info = subprocess.Popen(
+        [
+            'sstat', FORMAT_LIVE_STR, '--parsable', '--noheader', '-a', '-j',
+            jobid
+        ],
+        stdout=subprocess.PIPE)
     xs = []
     for line in info.stdout:
         j = 0
@@ -220,6 +268,34 @@ def get_live_values(jobid):
             xs.append(x)
     return xs
 
+
+def get_gpu_usage(node, start, end):
+    """
+    Calculate the average GPU usage between begin and end stamps.
+    Args:
+      node (string): The GPU node
+      start (int): start of measurements timestamp.
+      end (int): end of measurements timestamp.
+    """
+    payload = {
+        'query':
+        'utilization_gpu{{env="peregrine",instance="{}:9101",job="gpu"}}'.
+        format(node),
+        'start':
+        start,
+        'end':
+        end,
+        'step':
+        '60s'
+    }
+
+    data = requests.get(
+        'https://knyft.hpc.rug.nl:9091/api/v1/query_range', params=payload)
+    values = json.loads(data.content.decode())['data']['result'][0]['values']
+    average = sum([int(i[1]) for i in values]) / len(values)
+    return average
+
+
 def main(jobid):
     y = combine(get_values(jobid))
     meta = Meta._make(y + ['', ''])
@@ -230,8 +306,11 @@ def main(jobid):
         if len(tmp) != 0:
             ys.append(combine(tmp))
     if meta.State == "PENDING":
-        info = subprocess.Popen(['squeue', '--format=%E;%R', '--noheader', '-a', '-j', jobid], stdout=subprocess.PIPE)
-        deps, reason = info.stdout.readline().decode('utf-8').strip().split(";")
+        info = subprocess.Popen(
+            ['squeue', '--format=%E;%R', '--noheader', '-a', '-j', jobid],
+            stdout=subprocess.PIPE)
+        deps, reason = info.stdout.readline().decode('utf-8').strip().split(
+            ";")
         dependencies = deps
     else:
         dependencies = ""
@@ -239,10 +318,33 @@ def main(jobid):
     y = combine(ys)
     meta = Meta._make(y + [dependencies, reason])
 
-    for i,(name,parse,comb,show,prefer_live,format,desc) in enumerate(FIELDS):
+    for i, (name, parse, comb, show, prefer_live, format,
+            desc) in enumerate(FIELDS):
         val = y[i]
         if show:
             print("%-20s: %s" % (desc, format(val, meta)))
+
+    # for  gpu jobs, retreive gpu usage from prometheus.
+    if y[2] == 'gpu':
+        start = time.mktime(datetime.datetime.strptime(
+            y[7], '%Y-%m-%dT%H:%M:%S').timetuple())
+        if y[8] == 'Unknown':
+            end = time.time()
+        else:
+            end = time.mktime(datetime.datetime.strptime(
+                y[8], '%Y-%m-%dT%H:%M:%S').timetuple())
+        # prevent the script from crashing if anything  goes wrong.
+        # But we do want to read the exception.
+        try:
+            gpu_usage = get_gpu_usage(y[3], start, end)
+        except Exception as e:
+            print('\nGPU usage could not be retreived',
+                  'The error was:\n')
+            print(e)
+        print(
+            '%-20s: %.1f%% (%s)' % ('Average GPU usage', gpu_usage, y[3]),
+            file=sys.stderr)
+
 
 def usage(pipe):
     usage_msg = \
@@ -257,6 +359,7 @@ Report problems to hpc@rug.nl"""
 
     print(usage_msg, file=pipe)
 
+
 if __name__ == "__main__":
     if "-h" in sys.argv or "--help" in sys.argv:
         usage(sys.stdout)
@@ -266,8 +369,8 @@ if __name__ == "__main__":
         sys.exit(1)
     jobid = sys.argv[1]
     if len(set(jobid) - set("0123456789_.")) > 0:
-        print("The argument does not look like a valid job id", file=sys.stderr)
+        print(
+            "The argument does not look like a valid job id", file=sys.stderr)
         usage(sys.stderr)
         sys.exit(1)
     main(jobid)
-
