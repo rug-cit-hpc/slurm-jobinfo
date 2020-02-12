@@ -1,0 +1,12 @@
+name: Build RPM
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: rpmbuild
+        uses: robertdebock/rpmbuild-action@1.1.0
