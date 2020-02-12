@@ -13,8 +13,8 @@ jobs:
         shell: bash
         run: |
           version="$(grep Version SPECS/jobinfo.spec | awk '{print $2}')"
-          mkdir -p jobinfo-${version}/usr/bin
-          cp jobinfo jobinfo-${version}/usr/bin
+          mkdir jobinfo-${version}
+          cp jobinfo jobinfo-${version}
           tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
 
       - name: rpmbuild
