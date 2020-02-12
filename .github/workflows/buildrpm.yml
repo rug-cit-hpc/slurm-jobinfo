@@ -12,8 +12,10 @@ jobs:
       - name: create tarball
         shell: bash
         run: |
-          version="$(grep Version SPECS/jobinfo.spec | awk '{print $2}')"
+          version="$(grep Version jobinfo.spec | awk '{print $2}')"
           mkdir SOURCES
+          mkdir SPECS
+          cp jobinfo.spec SPECS
           mkdir jobinfo-${version}
           cp jobinfo jobinfo-${version}
           tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
