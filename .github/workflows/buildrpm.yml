@@ -13,6 +13,7 @@ jobs:
         shell: bash
         run: |
           version="$(grep Version SPECS/jobinfo.spec | awk '{print $2}')"
+          mkdir SOURCES
           mkdir jobinfo-${version}
           cp jobinfo jobinfo-${version}
           tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
