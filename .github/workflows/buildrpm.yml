@@ -8,5 +8,14 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
+
+      - name: create tarball
+        shell: bash
+        run: |
+          version="$(grep Version SPECS/jobinfo.spec | awk '{print $2}')"
+          mkdir jobinfo-${version}
+          cp jobinfo jobinfo-${version}
+          tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
+
       - name: rpmbuild
-        uses: robertdebock/rpmbuild-action@1.1.0
+        uses: robertdebock/rpmbuild-action@1.0.0

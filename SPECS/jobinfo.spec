@@ -40,5 +40,5 @@ rm -rf $RPM_BUILD_ROOT
 - Python 3 compatibility
 - Job efficiency percentage at CPU time
 
-* Mon Mar 22 2016 Bob Dröge <b.e.droge@rug.nl> - 8dec2015
+* Mon Mar 21 2016 Bob Dröge <b.e.droge@rug.nl> - 8dec2015
 - Initial build
