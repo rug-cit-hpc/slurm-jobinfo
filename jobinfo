@@ -5,6 +5,7 @@
 #
 # Copyright 2015 Anders Halager <aeh@birc.au.dk>
 # More functionality added by Bob Dröge <b.e.droge@rug.nl>
+# and Egon Rijpkema <e.m.a.rijpkema@rug.nl>
 #
 # LICENSE: MIT
 
@@ -267,11 +268,12 @@ def get_live_values(jobid):
             xs.append(x)
     return xs
 
+
 def get_gpu_usage(node, start, end):
     """
-    Calculate the average cpu usage between begin and end stamps.
+    Calculate the average GPU usage between begin and end stamps.
     Args:
-      node (string): The gpu node
+      node (string): The GPU node
       start (int): start of measurements timestamp.
       end (int): end of measurements timestamp.
     """
@@ -339,7 +341,9 @@ def main(jobid):
             print('\nGPU usage could not be retreived',
                   'The error was:\n')
             print(e)
-        print('%-20s: %.1f%% (%s)' % ('Gpu usage', gpu_usage, y[3]))
+        print(
+            '%-20s: %.1f%% (%s)' % ('Average GPU usage', gpu_usage, y[3]),
+            file=sys.stderr)
 
 
 def usage(pipe):
