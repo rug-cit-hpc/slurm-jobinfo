@@ -1,5 +1,5 @@
 Name: jobinfo
-Version: 1.0
+Version: 1.1
 Release: 1%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
