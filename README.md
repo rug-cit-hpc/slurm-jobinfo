@@ -1,3 +1,5 @@
+![Build RPM](https://github.com/rug-cit-hpc/slurm-jobinfo/workflows/Build%20RPM/badge.svg?branch=master)
+
 # jobinfo
 The `jobinfo` script tries to collect information for a full job combining
 information from the SLURM accounting system and live stats from `sstat` if the
