@@ -9,6 +9,4 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: rpmbuild
-        uses: robertdebock/rpmbuild-action@1.1.0
-        with:
-          distribution: centos-7
+        uses: robertdebock/rpmbuild-action@1.0.0
