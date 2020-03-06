@@ -33,6 +33,12 @@ jobs:
       - name: rpmbuild
         uses: robertdebock/rpmbuild-action@1.0.0
 
+      - name: grep RPM
+        shell: bash
+        run: |
+          mkdir RPM
+          cp github/workspace/RPMS/noarch/jobinfo*.rpm RPM/
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -51,7 +57,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: /github/workspace/RPMS/noarch/jobinfo-${{ steps.get_version.outputs.VERSION }}-1.el8.noarch.rpm
+          asset_path: RPM/jobinfo-${{ steps.get_version.outputs.VERSION }}-1.el8.noarch.rpm
           asset_name: jobinfo-${{ steps.get_version.outputs.VERSION }}.rpm
           asset_content_type: application/x-rpm
 
