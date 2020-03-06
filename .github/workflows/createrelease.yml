@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           mkdir RPM
-          cp github/workspace/RPMS/noarch/jobinfo*.rpm RPM/
+          cp /github/workspace/RPMS/noarch/jobinfo*.rpm RPM/
 
       - name: Create Release
         id: create_release
