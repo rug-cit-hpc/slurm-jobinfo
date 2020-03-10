@@ -37,8 +37,10 @@ jobs:
         id: check_rpm
         shell: bash
         run: |
-          rpmfile="$(ls -1 ${{ github.workspace }}/RPMS/noarch/jobinfo-*.rpm)"
+          rpmpath="$(ls -1 ${{ github.workspace }}/RPMS/noarch/jobinfo-*.rpm)"
+          rpmfile="$(basename ${rpmpath})"
           echo ::set-output name=RPMFILE::${rpmfile}
+          echo ::set-output name=RPMPATH::${rpmpath}
 
       - name: Create Release
         id: create_release
@@ -58,7 +60,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.check_rpm.outputs.RPMFILE }}
-#          asset_name: jobinfo-${{ steps.get_version.outputs.VERSION }}.rpm
+          asset_path: ${{ steps.check_rpm.outputs.RPMPATH }}
+          asset_name: ${{ steps.check_rpm.outputs.RPMFILE }}
           asset_content_type: application/x-rpm
 
