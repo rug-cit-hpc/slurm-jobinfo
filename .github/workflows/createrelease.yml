@@ -32,6 +32,8 @@ jobs:
 
       - name: rpmbuild
         uses: robertdebock/rpmbuild-action@1.1.1
+        with:
+          distribution: centos-7
 #        uses: robertdebock/rpmbuild-action@1.0.0
 
       - name: Check RPM
