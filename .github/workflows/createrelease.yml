@@ -36,6 +36,7 @@ jobs:
       - name: Check RPM
         shell: bash
         run: |
+          ls -R ${{ github.workspace }}
           ls /home/runner/work/slurm-jobinfo/slurm-jobinfo/RPMS/jobinfo-1.1-1.el8.noarch.rpm
           ls ${{ github.workspace }}/RPMS/jobinfo-${{ steps.get_version.outputs.VERSION }}-1.el8.noarch.rpm
 
