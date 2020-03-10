@@ -33,6 +33,12 @@ jobs:
       - name: rpmbuild
         uses: robertdebock/rpmbuild-action@1.0.0
 
+      - name: Check RPM
+        shell: bash
+        run: |
+          ls /home/runner/work/slurm-jobinfo/slurm-jobinfo/RPMS/jobinfo-1.1-1.el8.noarch.rpm
+          ls ${{ github.workspace }}/RPMS/jobinfo-${{ steps.get_version.outputs.VERSION }}-1.el8.noarch.rpm
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
