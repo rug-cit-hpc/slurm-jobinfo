@@ -32,9 +32,6 @@ jobs:
 
       - name: rpmbuild
         uses: robertdebock/rpmbuild-action@1.0.0
-
-      - name: grep RPM
-        shell: bash
         run: |
           mkdir RPM
           cp /github/workspace/RPMS/noarch/jobinfo*.rpm RPM/
