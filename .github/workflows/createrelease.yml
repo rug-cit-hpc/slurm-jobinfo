@@ -32,8 +32,13 @@ jobs:
 
       - name: rpmbuild
         uses: robertdebock/rpmbuild-action@1.0.0
+
+      - name Check and grab RPM
+        shell: bash
         run: |
           mkdir RPM
+          ls -R ${{ github.workspace }}
+          ls -R /github/workspace
           cp /github/workspace/RPMS/noarch/jobinfo*.rpm RPM/
 
       - name: Create Release
