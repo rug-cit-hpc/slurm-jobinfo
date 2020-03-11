@@ -33,6 +33,9 @@ install jobinfo $RPM_BUILD_ROOT/usr/bin/jobinfo
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Mar 10 2020 Bob Dröge <b.e.droge@rug.nl> - 1.1
+- Added GPU usage reporting functionality, implemented by Egon Rijpkema
+
 * Mon May 27 2019 Bob Dröge <b.e.droge@rug.nl> - 1.0
 - Updated spec file, proper version number
 
