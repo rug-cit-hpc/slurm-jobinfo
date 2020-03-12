@@ -17,6 +17,7 @@ import json
 import math
 import os
 import pwd
+import pynumparser
 import re
 import requests
 import subprocess
@@ -269,14 +270,26 @@ def get_live_values(jobid):
     return xs
 
 
+def parse_gpu_string(node_string):
+    match = re.search('(.+\[)([0-9]|-|,)+?(?=\])', node_string)
+    if match is None:
+        return [node_string]
+
+    base, sequence = match.group().split('[')
+    parser = pynumparser.NumberSequence(int)
+    return ['{}{:02d}'.format(base, i) for i in parser.parse(sequence)]
+
+
 def get_gpu_usage(node, start, end):
     """
     Calculate the average GPU usage between begin and end stamps.
     Args:
-      node (string): The GPU node
+      node (string): The GPU node.
       start (int): start of measurements timestamp.
       end (int): end of measurements timestamp.
     """
+
+
     payload = {
         'query':
         'utilization_gpu{{env="peregrine",instance="{}:9101",job="gpu"}}'.
@@ -294,6 +307,19 @@ def get_gpu_usage(node, start, end):
     values = json.loads(data.content.decode())['data']['result'][0]['values']
     average = sum([int(i[1]) for i in values]) / len(values)
     return average
+
+
+def get_gpus_usage(nodes, start, end):
+    """
+    Calculate the average GPU usage between begin and end stamps.
+    of a sequence of gpus.
+    Args:
+      nodes (string): The GPU node(s) in slurm format.
+      start (int): start of measurements timestamp.
+      end (int): end of measurements timestamp.
+    """
+    usages = [get_gpu_usage(gpu, start, end) for gpu in parse_gpu_string(nodes)]
+    return sum(usages) / len(usages)
 
 
 def main(jobid):
@@ -336,14 +362,13 @@ def main(jobid):
         # prevent the script from crashing if anything  goes wrong.
         # But we do want to read the exception.
         try:
-            gpu_usage = get_gpu_usage(y[3], start, end)
+            gpu_usage = get_gpus_usage(y[3], start, end)
         except Exception as e:
             print('\nGPU usage could not be retreived',
                   'The error was:\n')
-            print(e)
-        print(
-            '%-20s: %.1f%% (%s)' % ('Average GPU usage', gpu_usage, y[3]),
-            file=sys.stderr)
+            print(e, file=sys.stderr)
+
+        print('%-20s: %.1f%% (%s)' % ('Average GPU usage', gpu_usage, y[3]))
 
 
 def usage(pipe):
