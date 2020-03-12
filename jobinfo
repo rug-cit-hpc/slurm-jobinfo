@@ -363,12 +363,11 @@ def main(jobid):
         # But we do want to read the exception.
         try:
             gpu_usage = get_gpus_usage(y[3], start, end)
+            print('%-20s: %.1f%% (%s)' % ('Average GPU usage', gpu_usage, y[3]))
         except Exception as e:
             print('\nGPU usage could not be retreived',
                   'The error was:\n')
             print(e, file=sys.stderr)
-
-        print('%-20s: %.1f%% (%s)' % ('Average GPU usage', gpu_usage, y[3]))
 
 
 def usage(pipe):
