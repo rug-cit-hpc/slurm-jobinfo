@@ -271,6 +271,10 @@ def get_live_values(jobid):
 
 
 def parse_gpu_string(node_string):
+    """
+    Parses a string in the format of.
+    pg-gpu[1-3] or pg-gpu[2,4,5]
+    """
     match = re.search('(.+\[)([0-9]|-|,)+?(?=\])', node_string)
     if match is None:
         return [node_string]
@@ -317,9 +321,10 @@ def get_gpus_usage(nodes, start, end):
       nodes (string): The GPU node(s) in slurm format.
       start (int): start of measurements timestamp.
       end (int): end of measurements timestamp.
+    Returns: List: A list of tuples [(<hostname>, <percentage>)]
     """
-    usages = [get_gpu_usage(gpu, start, end) for gpu in parse_gpu_string(nodes)]
-    return sum(usages) / len(usages)
+    return [(gpu, get_gpu_usage(gpu, start, end))
+            for gpu in parse_gpu_string(nodes)]
 
 
 def main(jobid):
@@ -362,8 +367,9 @@ def main(jobid):
         # prevent the script from crashing if anything  goes wrong.
         # But we do want to read the exception.
         try:
-            gpu_usage = get_gpus_usage(y[3], start, end)
-            print('%-20s: %.1f%% (%s)' % ('Average GPU usage', gpu_usage, y[3]))
+            gpu_usages = get_gpus_usage(y[3], start, end)
+            for gpu, usage in gpu_usages:
+                print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
         except Exception as e:
             print('\nGPU usage could not be retreived',
                   'The error was:\n')
