@@ -9,7 +9,7 @@ URL: https://github.com/rug-cit-ris/slurm-jobinfo
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python python-requests
+Requires: python python-requests python3-pynumparser
 
 %description
 jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM commands to give a uniform interface for both current and historical jobs.
