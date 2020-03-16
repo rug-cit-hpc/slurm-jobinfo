@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Works with either Python v2.7+ or v3.3+
 #
