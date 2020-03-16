@@ -30,6 +30,7 @@ install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
 %defattr(-,root,root)
 #%doc README
 /usr/bin/jobinfo
+/usr/lib/python2.7/site-packages/pynumparser.py*
 
 %clean
 rm -rf $RPM_BUILD_ROOT
