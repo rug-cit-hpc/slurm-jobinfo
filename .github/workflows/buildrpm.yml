@@ -17,8 +17,9 @@ jobs:
           mkdir SPECS
           cp jobinfo.spec SPECS
           mkdir jobinfo-${version}
-          cp jobinfo jobinfo-${version}
+          cp jobinfo pynumparser.py jobinfo-${version}
           tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
 
       - name: rpmbuild
-        uses: robertdebock/rpmbuild-action@1.0.0
+        uses: ./.github/actions/rpmbuild/
+        #uses: robertdebock/rpmbuild-action@1.0.0
