@@ -22,8 +22,9 @@ jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM 
 
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/bin
+mkdir -p $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
 install jobinfo $RPM_BUILD_ROOT/usr/bin/jobinfo
-install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python/site-packages
+install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
 
 %files
 %defattr(-,root,root)
