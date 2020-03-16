@@ -38,6 +38,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Mon Mar 16 2020 Bob Dröge <b.e.droge@rug.nl> - 1.2
 - Support for multiple GPUs, implemented by Egon Rijpkema
+- Stick to Python2 for now (default in CentOS 6)
 
 * Tue Mar 10 2020 Bob Dröge <b.e.droge@rug.nl> - 1.1
 - Added GPU usage reporting functionality, implemented by Egon Rijpkema
