@@ -1,5 +1,5 @@
 Name: jobinfo
-Version: 1.1
+Version: 1.2
 Release: 1%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
@@ -34,6 +34,9 @@ install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python/site-packages
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Mar 16 2020 Bob Dröge <b.e.droge@rug.nl> - 1.2
+- Support for multiple GPUs, implemented by Egon Rijpkema
+
 * Tue Mar 10 2020 Bob Dröge <b.e.droge@rug.nl> - 1.1
 - Added GPU usage reporting functionality, implemented by Egon Rijpkema
 
