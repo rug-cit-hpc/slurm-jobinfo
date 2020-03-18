@@ -1,5 +1,5 @@
 Name: jobinfo
-Version: 1.2
+Version: 1.3.0
 Release: 1%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
@@ -36,6 +36,9 @@ install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Mar 18 2020 Bob Dröge <b.e.droge@rug.nl> - 1.3.0
+- Fix bug: do not attempt to parse Unknown as date for waiting jobs
+
 * Mon Mar 16 2020 Bob Dröge <b.e.droge@rug.nl> - 1.2
 - Support for multiple GPUs, implemented by Egon Rijpkema
 - Stick to Python2 for now (default in CentOS 6)
