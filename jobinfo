@@ -356,7 +356,7 @@ def main(jobid):
             print("%-20s: %s" % (desc, format(val, meta)))
 
     # for  gpu jobs, retreive gpu usage from prometheus.
-    if y[2] == 'gpu':
+    if y[2] == 'gpu' and y[7] != 'Unknown':
         start = time.mktime(datetime.datetime.strptime(
             y[7], '%Y-%m-%dT%H:%M:%S').timetuple())
         if y[8] == 'Unknown':
