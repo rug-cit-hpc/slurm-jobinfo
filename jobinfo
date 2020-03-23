@@ -17,13 +17,21 @@ import json
 import math
 import os
 import pwd
-import pynumparser
 import re
 import requests
 import subprocess
 import sys
 import time
 
+# pynumparser should have been installed to /usr/lib.
+# However, if another Python version is loaded as module,
+# Python may fail to find pynumparser. In this case we add it
+# to the search path manually and try again.
+try:
+    import pynumparser
+except ModuleNotFoundError:
+    sys.path.append('/usr/lib/python2.7/site-packages/')
+    import pynumparser
 
 def append(l, x):
     if l == '':
