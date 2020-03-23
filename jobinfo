@@ -29,7 +29,7 @@ import time
 # to the search path manually and try again.
 try:
     import pynumparser
-except ModuleNotFoundError:
+except ImportError:
     sys.path.append('/usr/lib/python2.7/site-packages/')
     import pynumparser
 
