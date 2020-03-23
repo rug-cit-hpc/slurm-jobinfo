@@ -1,6 +1,6 @@
 Name: jobinfo
 Version: 1.3.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
 Group: System Environment/Base
