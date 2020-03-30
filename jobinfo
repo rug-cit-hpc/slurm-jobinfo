@@ -379,9 +379,14 @@ def main(jobid):
             for gpu, usage in gpu_usages:
                 print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
         except Exception as e:
-            print('\nGPU usage could not be retreived',
-                  'The error was:\n')
-            print(e, file=sys.stderr)
+            if type(e) == IndexError:
+                print(
+                    '\nError: No GPU metrics available ({})'.format(y[3]),
+                    file=sys.stderr)
+            else:
+                print('\nGPU usage could not be retrieved.',
+                      'The error was:\n')
+                print(e, file=sys.stderr)
 
 
 def usage(pipe):
