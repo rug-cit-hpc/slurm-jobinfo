@@ -1,6 +1,6 @@
 Name: jobinfo
-Version: 1.3.1
-Release: 2%{?dist}
+Version: 1.3.2
+Release: 1%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
 Group: System Environment/Base
@@ -36,6 +36,9 @@ install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Apr 7 2020 Bob Dröge <b.e.droge@rug.nl> - 1.3.2
+- Additional GPU bugfixes
+
 * Mon Mar 23 2020 Bob Dröge <b.e.droge@rug.nl> - 1.3.1
 - Bugfix: pynumparser could not be found when another Python version was loaded as module.
 
