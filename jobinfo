@@ -179,6 +179,106 @@ def f_state(x, meta):
         deps = " (%s)" % deps
     return ','.join(states) + reason + deps
 
+def memory_to_bytes(memory_spec, cores_per_node):
+   # Find unit of memory request
+   unit=memory_spec[-2:-1]
+   # Find number in memory request
+   memory_req=float(memory_spec[:-2])
+   # Transform the value into bytes
+   if unit == 'K':
+      memory_req = memory_req*1024
+   elif unit == 'M':
+      memory_req = memory_req*1024**2
+   elif unit == 'G':
+      memory_req = memory_req*1024**3
+   elif unit == 'T':
+      memory_req = memory_req*1024**4
+   elif unit == 'P':
+      memory_req = memory_req*1024**5
+   # If the memory request was per core, multiply by the average number of cores
+   # This is the best we can do given the lack of detailed information
+   if memory_spec[-1] == 'c':
+      memory_req = memory_req*cores_per_node
+   return memory_req
+
+def get_cpus_node(nodenames):
+    nodename=nodenames.split(',')[0]
+    info = subprocess.Popen(['scontrol', 'show','node', nodename],stdout=subprocess.PIPE)
+    for line in info.stdout:
+        if 'CfgTRES' in line:
+            cpucount = re.search('cpu=(\d+)',line).group(1)
+    return cpucount
+
+def get_hints(meta):
+    # Parameters affecting the behaviour of this routine
+    min_walltime = 180          # Minimum walltime needed before printing job hints
+    min_memory = 2*1024**3      # Minimum request that will be ignored
+    ignore_partitions = ['gpu'] # Partitions for which to ignore memory and cpu usage, e.g. GPU partitions
+                                # where GPU usage is more important, or where full or partial 
+                                # nodes are allocated anyway.
+
+    if meta.end.lower() == 'unknown':
+        return
+
+    # Ignore jobs without or too little time
+    cputime_secs = elapsed_to_seconds(meta.TotalCPU)
+    walltime_secs = elapsed_to_seconds(meta.elapsed)
+    # Ignore jobs without or too little time
+    if cputime_secs == 0 or walltime_secs < min_walltime:
+        return
+    if meta.Partition in ignore_partitions:
+        return
+
+    hints = []
+
+    # CPU efficiency
+    ncpus = meta.ncpus
+    eff = 100 * cputime_secs / (ncpus * walltime_secs)
+    if (eff < 75):
+      if (ncpus == 1):
+          hints.append(
+              ["The program efficiency is low.",
+               "Check the file in- and output pattern of your application."]
+          )
+      elif (eff <= (100.0 / ncpus)):
+          hints.append(
+              ["The program efficiency is very low. Your program does not seem to run in",
+               "parallel. Please check the program documentation to see how to make the",
+               "program run in parallel.",
+               "If you can't find information about this, the program will not run in", 
+               "parallel! Stop requesting multiple CPU cores if that is the case."]
+          )
+      else:
+          hints.append(
+              ["The program efficiency is low. Your program is not using the assigned cores",
+               "effectively. Please check if you are using all the cores you requested.",
+               "You may also need to check the file in- and output pattern of your program."]
+          )
+    # Memory efficiency
+    max_memory = meta.MaxRSS
+    cores_per_node = ncpus / meta.NNodes
+    req_memory = memory_to_bytes(meta.ReqMem, cores_per_node)
+    cores_max_node = get_cpus_node(meta.MaxRSSNode)
+    if req_memory > min_memory*cores_per_node and cores_per_node < cores_max_node:
+        if (max_memory/req_memory) < 0.5:
+            hints.append(
+               ["You requested much more memory than your program used.",
+                "Please reduce the requested amount of memory."]
+            ) 
+
+    if len(hints)>0:
+        print("Hints and tips      :")
+        hint_number = 1
+        for hint in hints:
+            hint_line = 1
+            for line in hint:
+                if hint_line == 1:
+                    print (" %i) %s" % (hint_number, line))
+                else:
+                    print ("    %s" % line)
+                hint_line = hint_line + 1
+            hint_number = hint_number + 1
+        print(" *) For more information on these issues see https://wiki.hpc.rug.nl/peregrine/additional_information/job_hints")
 
 def efficiency(meta):
     cputime_secs = elapsed_to_seconds(meta.TotalCPU)
@@ -202,6 +302,7 @@ FIELDS = [
         Field("User",                str,        keep_first,   True,  False, f_str,     "User"),
         Field("Partition",           str,        keep_first,   True,  False, f_str,     "Partition"),
         Field("NodeList",            str,        keep_first,   True,  False, f_str,     "Nodes"),
+        Field("NNodes",              int,        max,          True,  False, f_str,     "Number of Nodes"),
         Field("ncpus",               int,        max,          True,  False, f_str,     "Cores"),
         Field("State",               str,        append,       True,  False, f_state,   "State"),
         Field("Submit",              str,        keep_first,   True,  False, f_str,     "Submit"),
@@ -387,6 +488,7 @@ def main(jobid):
                 print('\nGPU usage could not be retrieved.',
                       'The error was:\n')
                 print(e, file=sys.stderr)
+    get_hints(meta)
 
 
 def usage(pipe):
