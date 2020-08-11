@@ -316,7 +316,6 @@ def get_gpu_usage(node, start, end):
 
     data = requests.get(
         'https://knyft.hpc.rug.nl:9091/api/v1/query_range', params=payload)
-    print('https://knyft.hpc.rug.nl:9091/api/v1/query_range', payload)
     values = []
 
     for gpu in range(len(json.loads(data.content.decode())['data']['result'])):
