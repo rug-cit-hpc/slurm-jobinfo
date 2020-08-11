@@ -316,7 +316,11 @@ def get_gpu_usage(node, start, end):
 
     data = requests.get(
         'https://knyft.hpc.rug.nl:9091/api/v1/query_range', params=payload)
-    values = json.loads(data.content.decode())['data']['result'][0]['values']
+    values = []
+
+    for gpu in range(len(json.loads(data.content.decode())['data']['result'])):
+        values += json.loads(data.content.decode())['data']['result'][gpu]['values']
+
     average = sum([int(i[1]) for i in values]) / len(values)
     return average
 
