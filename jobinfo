@@ -197,7 +197,7 @@ def memory_to_bytes(memory_spec, cores_per_node):
    return memory_req
 
 def get_cpus_node(nodenames):
-    nodename=nodenames.split(',')[0]
+    nodename=nodenames.split(',')[-1]
     info = subprocess.Popen(['scontrol', 'show','node', nodename],stdout=subprocess.PIPE)
     for line in info.stdout:
         if 'CfgTRES' in line:
