@@ -180,21 +180,9 @@ def f_state(x, meta):
     return ','.join(states) + reason + deps
 
 def memory_to_bytes(memory_spec, cores_per_node):
-   # Find unit of memory request
-   unit=memory_spec[-2:-1]
-   # Find number in memory request
-   memory_req=float(memory_spec[:-2])
-   # Transform the value into bytes
-   if unit == 'K':
-      memory_req = memory_req*1024
-   elif unit == 'M':
-      memory_req = memory_req*1024**2
-   elif unit == 'G':
-      memory_req = memory_req*1024**3
-   elif unit == 'T':
-      memory_req = memory_req*1024**4
-   elif unit == 'P':
-      memory_req = memory_req*1024**5
+   # Convert memory_spec to bytes, ignoring the c or n at the end
+   memory_req = byte_size(memory_spec[:-1])
+
    # If the memory request was per core, multiply by the average number of cores
    # This is the best we can do given the lack of detailed information
    if memory_spec[-1] == 'c':
