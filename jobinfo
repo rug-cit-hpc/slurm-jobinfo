@@ -23,6 +23,13 @@ import subprocess
 import sys
 import time
 
+# Parameters affecting when hints about job performance will be given.
+min_walltime = 180          # Minimum walltime needed before printing job hints
+min_memory = 2*1024**3      # Minimum request that will be ignored
+ignore_partitions = ['gpu'] # Partitions for which to ignore memory and cpu usage, e.g. GPU partitions
+                            # where GPU usage is more important, or where full or partial 
+                            # nodes are allocated anyway.
+
 # pynumparser should have been installed to /usr/lib.
 # However, if another Python version is loaded as module,
 # Python may fail to find pynumparser. In this case we add it
@@ -198,13 +205,6 @@ def get_cpus_node(nodenames):
     return cpucount
 
 def get_hints(meta):
-    # Parameters affecting the behaviour of this routine
-    min_walltime = 180          # Minimum walltime needed before printing job hints
-    min_memory = 2*1024**3      # Minimum request that will be ignored
-    ignore_partitions = ['gpu'] # Partitions for which to ignore memory and cpu usage, e.g. GPU partitions
-                                # where GPU usage is more important, or where full or partial 
-                                # nodes are allocated anyway.
-
     if meta.end.lower() == 'unknown':
         return
 
