@@ -266,7 +266,8 @@ def get_hints(meta):
                     print ("    %s" % line)
                 hint_line = hint_line + 1
             hint_number = hint_number + 1
-        print(" *) For more information on these issues see https://wiki.hpc.rug.nl/peregrine/additional_information/job_hints")
+        print(" *) For more information on these issues see:")
+        print("    https://wiki.hpc.rug.nl/peregrine/additional_information/job_hints")
 
 def efficiency(meta):
     cputime_secs = elapsed_to_seconds(meta.TotalCPU)
