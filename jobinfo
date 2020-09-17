@@ -287,6 +287,7 @@ def whoami():
 
 Field = NT('Field', 'name ctor combinator shown prefer_live formatter desc')
 FIELDS = [
+        Field("JobID",               str,        keep_first,   True,  False, f_str,     "JobID"),
         Field("JobName",             str,        keep_first,   True,  False, f_str,     "Name"),
         Field("User",                str,        keep_first,   True,  False, f_str,     "User"),
         Field("Partition",           str,        keep_first,   True,  False, f_str,     "Partition"),
