@@ -411,7 +411,10 @@ def get_gpu_usage(node, start, end):
     for gpu in range(len(json.loads(data.content.decode())['data']['result'])):
         values += json.loads(data.content.decode())['data']['result'][gpu]['values']
 
-    average = sum([int(i[1]) for i in values]) / len(values)
+    if len(values) > 0:
+       average = sum([int(i[1]) for i in values]) / len(values)
+    else:
+       average = -1
     return average
 
 
@@ -471,16 +474,14 @@ def main(jobid):
         try:
             gpu_usages = get_gpus_usage(meta.NodeList, start, end)
             for gpu, usage in gpu_usages:
-                print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
+                if usage>0:
+                    print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
+                else:
+                    print('%-20s: No GPU metrics available (%s)' % ('Average GPU usage', gpu))
         except Exception as e:
-            if type(e) == IndexError:
-                print(
-                    '\nError: No GPU metrics available ({})'.format(meta.NodeList),
-                    file=sys.stderr)
-            else:
-                print('\nGPU usage could not be retrieved.',
-                      'The error was:\n')
-                print(e, file=sys.stderr)
+            print('\nGPU usage could not be retrieved.',
+                  'The error was:\n')
+            print(e, file=sys.stderr)
     get_hints(meta)
 
 
