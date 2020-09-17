@@ -333,14 +333,14 @@ def combine(xs):
 
 def get_values(jobid):
     info = subprocess.Popen(
-        ['sacct', FORMAT_STR, '--parsable', '--noheader', '-j', jobid],
+        ['sacct', FORMAT_STR, '--parsable', '--noheader','--delimiter='+u'\u2603', '-j', jobid],
         stdout=subprocess.PIPE)
     xs = []
     for line in info.stdout:
         xs.append(
             [(s != "" and ctor(s) or ctor())
              for ctor, s in zip(FIELD_CTORS,
-                                line.decode('utf-8').strip().split('|'))])
+                                line.decode('utf-8').strip().split(u'\u2603'))])
     if len(xs) == 0:
         print("No such job", file=sys.stderr)
         sys.exit(1)
