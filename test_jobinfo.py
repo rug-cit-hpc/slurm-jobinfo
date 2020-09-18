@@ -22,16 +22,18 @@ def load_module_from_file(module_name, module_path):
     loader.exec_module(loaded)
     return loaded
 
+jobinfo = load_module_from_file('jobinfo', './jobinfo')
+
 
 class TestJobinfo(unittest.TestCase):
-    def setUp(self):
-        self.jobinfo = load_module_from_file('jobinfo', './jobinfo')
+#    def test_byte_size(self):
+#        self.assertEqual(self.jobinfo.None)
 
     def test_memory_to_bytes(self):
-        self.assertEqual(self.jobinfo.memory_to_bytes('1Gc',  1),  1*1024**3)
-        self.assertEqual(self.jobinfo.memory_to_bytes('1Gc', 24), 24*1024**3)
-        self.assertEqual(self.jobinfo.memory_to_bytes('1Gn',  1),  1*1024**3)
-        self.assertEqual(self.jobinfo.memory_to_bytes('1Gn', 24),  1*1024**3)
+        self.assertEqual(jobinfo.memory_to_bytes('1Gc',  1),  1*1024**3)
+        self.assertEqual(jobinfo.memory_to_bytes('1Gc', 24), 24*1024**3)
+        self.assertEqual(jobinfo.memory_to_bytes('1Gn',  1),  1*1024**3)
+        self.assertEqual(jobinfo.memory_to_bytes('1Gn', 24),  1*1024**3)
 
     @unittest.mock.patch('subprocess.Popen')
     def test_get_cpus_node(self, mock_subproc_popen):
@@ -39,7 +41,7 @@ class TestJobinfo(unittest.TestCase):
         stdout_mock.write(b'   CfgTRES=cpu=24,mem=128500M,billing=24')
         stdout_mock.seek(0)
         mock_subproc_popen.return_value.stdout = stdout_mock
-        self.assertEqual(self.jobinfo.get_cpus_node('pg-node123,pg-node124'), 24)
+        self.assertEqual(jobinfo.get_cpus_node('pg-node123,pg-node124'), 24)
 
 if __name__ == '__main__':
     unittest.main()
