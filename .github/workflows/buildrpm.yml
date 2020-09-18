@@ -29,5 +29,5 @@ jobs:
         with:
           name: RPM package
 #          path: /github/workspace/RPMS/noarch/jobinfo*.rpm
-#          path: ${{ github.workspace }}/build/noarch/jobinfo*.rpm
-          path: ${GITHUB_WORKSPACE}/build/noarch/jobinfo*.rpm
+          path: ${{ github.workspace }}/build/noarch/jobinfo*.rpm
+#          path: ${GITHUB_WORKSPACE}/build/noarch/jobinfo*.rpm
