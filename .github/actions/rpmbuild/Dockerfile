@@ -11,4 +11,5 @@ RUN yum install -y rpmdevtools yum-utils spectool python3 && \
 
 CMD spectool --get-files --all SPECS/*.spec && \
     yum-builddep --assumeyes SPECS/*.spec && \
-    rpmbuild --define '_topdir /github/workspace' -ba SPECS/*.spec
+    rpmbuild --define "_topdir ${GITHUB_WORKSPACE}" -ba SPECS/*.spec
+#    rpmbuild --define '_topdir /github/workspace' -ba SPECS/*.spec

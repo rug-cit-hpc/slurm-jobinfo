@@ -28,5 +28,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: RPM package
-          path: /github/workspace/RPMS/noarch/jobinfo*.rpm
-#          path: ${{ github.workspace }}/build/noarch/jobinfo*.rpm
+#          path: /github/workspace/RPMS/noarch/jobinfo*.rpm
+          path: ${{ github.workspace }}/build/noarch/jobinfo*.rpm
