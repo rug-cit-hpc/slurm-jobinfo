@@ -23,3 +23,9 @@ jobs:
       - name: rpmbuild
         uses: ./.github/actions/rpmbuild/
         #uses: robertdebock/rpmbuild-action@1.0.0
+
+      - name: upload rpm package as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: RPM package
+          path: ${{ github.workspace }}/build/noarch/jobinfo*.rpm
