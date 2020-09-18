@@ -34,8 +34,8 @@ install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python3.6/site-packages
 #%doc README
 /usr/bin/jobinfo
 /usr/lib/python3.6/site-packages/pynumparser.py*
-/usr/lib/python/3.6/site-packages/__pycache__/pynumparser.cpython-36.opt-1.pyc
-/usr/lib/python/3.6/site-packages/__pycache__/pynumparser.cpython-36.pyc
+/usr/lib/python3.6/site-packages/__pycache__/pynumparser.cpython-36.opt-1.pyc
+/usr/lib/python3.6/site-packages/__pycache__/pynumparser.cpython-36.pyc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
