@@ -26,6 +26,8 @@ mkdir -p $RPM_BUILD_ROOT/usr/lib/python3.6/site-packages
 install jobinfo $RPM_BUILD_ROOT/usr/bin/jobinfo
 install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python3.6/site-packages
 
+%py_byte_compile %{python3} $RPM_BUILD_ROOT/usr/lib/python3.6/site-packages/pynumparser.py
+
 %files
 %defattr(-,root,root)
 #%doc README
