@@ -10,6 +10,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: python3 python36-requests
+BuildRequires:  python%{python3_pkgversion}-devel
 
 %description
 jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM commands to give a uniform interface for both current and historical jobs.
