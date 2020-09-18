@@ -9,7 +9,7 @@ URL: https://github.com/rug-cit-ris/slurm-jobinfo
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python python-requests
+Requires: python3 python36-requests
 
 %description
 jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM commands to give a uniform interface for both current and historical jobs.
@@ -22,15 +22,15 @@ jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM 
 
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/bin
-mkdir -p $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
+mkdir -p $RPM_BUILD_ROOT/usr/lib/python3.6/site-packages
 install jobinfo $RPM_BUILD_ROOT/usr/bin/jobinfo
-install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
+install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python3.6/site-packages
 
 %files
 %defattr(-,root,root)
 #%doc README
 /usr/bin/jobinfo
-/usr/lib/python2.7/site-packages/pynumparser.py*
+/usr/lib/python3.6/site-packages/pynumparser.py*
 
 %clean
 rm -rf $RPM_BUILD_ROOT

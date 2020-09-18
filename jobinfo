@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3.6
 # -*- coding: utf-8 -*-
 #
 # jobinfo - collect job information from slurm in nicely readable format
@@ -37,7 +37,7 @@ ignore_partitions = ['gpu'] # Partitions for which to ignore memory and cpu usag
 try:
     import pynumparser
 except ImportError:
-    sys.path.append('/usr/lib/python2.7/site-packages/')
+    sys.path.append('/usr/lib/python3.6/site-packages/')
     import pynumparser
 
 def append(l, x):
