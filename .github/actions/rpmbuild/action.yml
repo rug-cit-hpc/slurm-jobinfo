@@ -10,7 +10,7 @@ inputs:
 
 runs:
   using: docker
-  image: 'Dockerfile-'${{ inputs.container-os }}
+  image: 'Dockerfile-{{ inputs.container-os }}'
 #  image: 'docker://robertdebock/github-action-rpmbuild:centos-7'
 
 branding:
