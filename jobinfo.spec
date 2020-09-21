@@ -34,7 +34,7 @@ install pynumparser.py %{buildroot}%{python3_sitelib}
 %{_bindir}/jobinfo
 #%pycached %{python3_sitelib}/pynumparser.py
 %{python3_sitelib}/pynumparser.py
-%{python3_sitelib}/__pycache__/pynumparser.cpython-%{python3_version_nodots}{,.opt-?}.pyc
+%{python3_sitelib}/__pycache__/pynumparser.cpython-%{python3_version_nodots}*.pyc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
