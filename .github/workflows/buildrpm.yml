@@ -3,7 +3,12 @@ name: Build RPM
 on: [push]
 
 jobs:
-  build:
+  centos:
+    strategy:
+      matrix:
+        container-os:
+          - 'centos7'
+          - 'centos8'
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -23,6 +28,8 @@ jobs:
       - name: rpmbuild
         uses: ./.github/actions/rpmbuild/
         #uses: robertdebock/rpmbuild-action@1.0.0
+        with:
+          container-os: ${{ matrix.container-os }}
 
       - name: upload rpm package as artifact
         uses: actions/upload-artifact@v2
