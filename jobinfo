@@ -333,7 +333,7 @@ def combine(xs):
 
 def get_values(jobid):
     info = subprocess.Popen(
-        ['sacct', FORMAT_STR, '--parsable', '--noheader','--delimiter='+u'\u2603', '-j', jobid],
+        ['sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid],
         stdout=subprocess.PIPE)
     xs = []
     for line in info.stdout:
