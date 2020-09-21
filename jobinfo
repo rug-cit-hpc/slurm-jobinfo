@@ -412,7 +412,10 @@ def get_gpu_usage(node, start, end):
     for gpu in range(len(json.loads(data.content.decode())['data']['result'])):
         values += json.loads(data.content.decode())['data']['result'][gpu]['values']
 
-    average = sum([int(i[1]) for i in values]) / len(values)
+    if len(values) > 0:
+       average = sum([int(i[1]) for i in values]) / len(values)
+    else:
+       average = -1
     return average
 
 
@@ -459,29 +462,27 @@ def main(jobid):
             print("%-20s: %s" % (desc, format(val, meta)))
 
     # for  gpu jobs, retreive gpu usage from prometheus.
-    if y[2] == 'gpu' and y[7] != 'Unknown':
+    if meta.Partition == 'gpu' and meta.start != 'Unknown':
         start = time.mktime(datetime.datetime.strptime(
-            y[7], '%Y-%m-%dT%H:%M:%S').timetuple())
-        if y[8] == 'Unknown':
+            meta.start, '%Y-%m-%dT%H:%M:%S').timetuple())
+        if meta.end == 'Unknown':
             end = time.time()
         else:
             end = time.mktime(datetime.datetime.strptime(
-                y[8], '%Y-%m-%dT%H:%M:%S').timetuple())
+                meta.end, '%Y-%m-%dT%H:%M:%S').timetuple())
         # prevent the script from crashing if anything  goes wrong.
         # But we do want to read the exception.
         try:
-            gpu_usages = get_gpus_usage(y[3], start, end)
+            gpu_usages = get_gpus_usage(meta.NodeList, start, end)
             for gpu, usage in gpu_usages:
-                print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
+                if usage>0:
+                    print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
+                else:
+                    print('%-20s: No GPU metrics available (%s)' % ('Average GPU usage', gpu))
         except Exception as e:
-            if type(e) == IndexError:
-                print(
-                    '\nError: No GPU metrics available ({})'.format(y[3]),
-                    file=sys.stderr)
-            else:
-                print('\nGPU usage could not be retrieved.',
-                      'The error was:\n')
-                print(e, file=sys.stderr)
+            print('\nGPU usage could not be retrieved.',
+                  'The error was:\n')
+            print(e, file=sys.stderr)
     get_hints(meta)
 
 
