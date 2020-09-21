@@ -35,7 +35,7 @@ ignore_partitions = ['gpu'] # Partitions for which to ignore memory and cpu usag
 try:
     import pynumparser
 except ImportError:
-    sys.path.append('/usr/lib/python3.6/site-packages/')
+    sys.path.append(f'/usr/lib/python3.{sys.version_info.minor}/site-packages/')
     import pynumparser
 
 def append(l, x):
