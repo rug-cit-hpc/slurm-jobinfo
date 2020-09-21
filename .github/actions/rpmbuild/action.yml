@@ -2,15 +2,9 @@ name: Build an RPM
 description: Build an RPM.
 author: Robert de Bock <robert@meinit.nl>
 
-inputs:
-  container-os:
-    description: 'Base OS for container'
-    required: false
-    default: 'centos7'
-
 runs:
   using: docker
-  image: 'Dockerfile-{{ inputs.container-os }}'
+  image: 'Dockerfile-centos7'
 #  image: 'docker://robertdebock/github-action-rpmbuild:centos-7'
 
 branding:
