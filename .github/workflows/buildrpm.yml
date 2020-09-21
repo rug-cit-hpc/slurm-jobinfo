@@ -21,13 +21,10 @@ jobs:
           tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
 
       - name: rpmbuild
-        uses: ./.github/actions/rpmbuild/
-        #uses: robertdebock/rpmbuild-action@1.0.0
+        uses: ./.github/actions/rpmbuild-centos7/
 
       - name: upload rpm package as artifact
         uses: actions/upload-artifact@v2
         with:
           name: RPM package
-#          path: /github/workspace/RPMS/noarch/jobinfo*.rpm
           path: ${{ github.workspace }}/noarch/jobinfo*.rpm
-#          path: ${GITHUB_WORKSPACE}/build/noarch/jobinfo*.rpm
