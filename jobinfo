@@ -4,8 +4,10 @@
 # jobinfo - collect job information from slurm in nicely readable format
 #
 # Copyright 2015 Anders Halager <aeh@birc.au.dk>
-# More functionality added by Bob Dröge <b.e.droge@rug.nl>
-# and Egon Rijpkema <e.m.a.rijpkema@rug.nl>
+# More functionality added by:
+# Bob Dröge <b.e.droge@rug.nl>
+# Egon Rijpkema <e.m.a.rijpkema@rug.nl>
+# Fokke Dijkstra <f.dijkstra@rug.nl>
 #
 # LICENSE: MIT
 
