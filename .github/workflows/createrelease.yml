@@ -31,8 +31,10 @@ jobs:
           tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
 
       - name: rpmbuild
-#        uses: robertdebock/rpmbuild-action@1.1.1
-        uses: ./.github/actions/rpmbuild/
+        uses: ./.github/actions/rpmbuild-centos7/
+
+      #- name: rpmbuild
+      #  uses: ./.github/actions/rpmbuild-centos8/
 
       - name: Check RPM
         id: check_rpm
