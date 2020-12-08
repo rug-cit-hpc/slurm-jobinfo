@@ -477,7 +477,7 @@ def main(jobid):
         try:
             gpu_usages = get_gpus_usage(meta.NodeList, start, end)
             for gpu, usage in gpu_usages:
-                if usage>0:
+                if usage >= 0:
                     print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
                 else:
                     print('%-20s: No GPU metrics available (%s)' % ('Average GPU usage', gpu))
