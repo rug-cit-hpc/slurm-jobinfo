@@ -336,11 +336,12 @@ def combine(xs):
 
 
 def get_values(jobid):
+    sacct_cmd = ['sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid]
     info = subprocess.Popen(
-        ['sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603'.encode('UTF-8'), '-j', jobid],
+        map(lambda s: s.encode('utf-8'), sacct_cmd),
         stdout=subprocess.PIPE)
     xs = []
-    for line in info.stdout:
+    for line in info.stdout: #.decode('utf-8').strip().split('\n'):
         xs.append(
             [(s != "" and ctor(s) or ctor())
              for ctor, s in zip(FIELD_CTORS,
