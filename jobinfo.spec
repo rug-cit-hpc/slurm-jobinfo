@@ -1,5 +1,5 @@
 Name: jobinfo
-Version: 1.3.2
+Version: 1.4.1
 Release: 1%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
@@ -40,6 +40,15 @@ install pynumparser.py %{buildroot}%{python3_sitelib}
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Sep 23 2020 Bob Dröge <b.e.droge@rug.nl> - 1.4.1
+- Fix unicode issue, which somehow caused issues for the Slurm epilog.
+
+* Tue Sep 22 2020 Bob Dröge <b.e.droge@rug.nl> - 1.4.0
+- Poor resource usage job hints (implemented by Fokke Dijkstra)
+- Fixes for GPU usage reporting
+- Fix when pipe symbol is used in job name
+- Report Job ID in output
+
 * Tue Apr 7 2020 Bob Dröge <b.e.droge@rug.nl> - 1.3.2
 - Additional GPU bugfixes
 
