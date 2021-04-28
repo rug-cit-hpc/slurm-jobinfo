@@ -341,7 +341,7 @@ def get_values(jobid):
         map(lambda s: s.encode('utf-8'), sacct_cmd),
         stdout=subprocess.PIPE)
     xs = []
-    for line in info.stdout: #.decode('utf-8').strip().split('\n'):
+    for line in info.stdout:
         xs.append(
             [(s != "" and ctor(s) or ctor())
              for ctor, s in zip(FIELD_CTORS,
