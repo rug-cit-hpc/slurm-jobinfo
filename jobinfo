@@ -28,7 +28,7 @@ import time
 # Parameters affecting when hints about job performance will be given.
 min_walltime = 180          # Minimum walltime needed before printing job hints
 min_memory = 2*1024**3      # Minimum request that will be ignored
-ignore_partitions = ['gpu'] # Partitions for which to ignore memory and cpu usage, e.g. GPU partitions
+ignore_partitions = ['gpu', 'gpushort'] # Partitions for which to ignore memory and cpu usage, e.g. GPU partitions
                             # where GPU usage is more important, or where full or partial 
                             # nodes are allocated anyway.
 
@@ -463,8 +463,8 @@ def main(jobid):
         if show:
             print("%-20s: %s" % (desc, format(val, meta)))
 
-    # for  gpu jobs, retreive gpu usage from prometheus.
-    if meta.Partition == 'gpu' and meta.start != 'Unknown':
+    # for jobs in a partition named gpu*, retreive gpu usage from prometheus.
+    if meta.Partition.startswith('gpu') and meta.start != 'Unknown':
         start = time.mktime(datetime.datetime.strptime(
             meta.start, '%Y-%m-%dT%H:%M:%S').timetuple())
         if meta.end == 'Unknown':
