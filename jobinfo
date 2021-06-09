@@ -197,14 +197,16 @@ def f_state(x, meta):
         deps = " (%s)" % deps
     return ','.join(states) + reason + deps
 
-def memory_to_bytes(memory_spec, cores_per_node):
+def get_total_memory_request(memory_spec, ncpus, nnodes):
    # Convert memory_spec to bytes, ignoring the c or n at the end
    memory_req = byte_size(memory_spec[:-1])
 
-   # If the memory request was per core, multiply by the average number of cores
-   # This is the best we can do given the lack of detailed information
+   # If the memory request was per core, multiply by the number of cpus used
+   # otherwise multiply by the number of nodes
    if memory_spec[-1] == 'c':
-      memory_req = memory_req*cores_per_node
+      memory_req = memory_req*ncpus
+   else:
+      memory_req = memory_req*nnodes
    return memory_req
 
 
@@ -257,12 +259,16 @@ def get_hints(meta):
                "You may also need to check the file in- and output pattern of your program."]
           )
     # Memory efficiency
-    max_memory = meta.MaxRSS
+    # Calculate the average number of cores per node used
     cores_per_node = ncpus / meta.NNodes
-    req_memory = memory_to_bytes(meta.ReqMem, cores_per_node)
+    # Find the total number of cores for the node used
     cores_max_node = get_cpus_node(meta.MaxRSSNode)
-    if req_memory > min_memory*cores_per_node and cores_per_node < cores_max_node:
-        if (max_memory/req_memory) < 0.5:
+    # Calculate the average amount of memory requested per node
+    req_memory = get_total_memory_request(meta.ReqMem, ncpus, meta.NNodes)
+    # If we haven't requested a lot of memory, or are using a full node we don't
+    # really care about the memory usage. Otherwise check the usage.
+    if req_memory > min_memory*ncpus and cores_per_node < cores_max_node:
+        if (meta.TRESUsageInTot/req_memory) < 0.5:
             hints.append(
                ["You requested much more memory than your program used.",
                 "Please reduce the requested amount of memory."]
