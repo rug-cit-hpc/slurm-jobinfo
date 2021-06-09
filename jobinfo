@@ -45,10 +45,8 @@ def append(l, x):
         return x
     return ','.join(sorted(set(l.split(',') + [x])))
 
-
 def keep_first(a, b):
     return a == '' and b or a
-
 
 def time_max(a, b):
     if 'UNLIMITED' in [a, b]:
@@ -66,6 +64,12 @@ def time_min(a, b):
     if b in ['', 'INVALID', 'UNLIMITED']:
         return a
     return max(a, b)
+
+def tres_mem(s=None):
+    if s is None:
+       return 0.0
+    memval = byte_size(re.search(r'(?<=mem=)[0-9]+[KMGT]', s).group(0))
+    return memval
 
 
 def byte_size(s=None):
@@ -112,7 +116,11 @@ def elapsed_to_seconds(elapsed):
 
 
 def f_rss(x, meta):
-    return "%s (%s)" % (format_bs(x), meta.MaxRSSNode)
+    return "%s (%s, %s)" % (format_bs(x), meta.MaxRSSNode, meta.maxpertask)
+
+
+def f_tres(x, meta):
+   return "%s" % (format_bs(x))
 
 
 def f_dw(x, meta):
@@ -291,13 +299,14 @@ def whoami():
 
 Field = NT('Field', 'name ctor combinator shown prefer_live formatter desc')
 FIELDS = [
-        Field("JobID",               str,        keep_first,   True,  False, f_str,     "Job ID"),
+        Field("JobID",               str,        keep_first,   True,  True,  f_str,     "Job ID"),
         Field("JobName",             str,        keep_first,   True,  False, f_str,     "Name"),
         Field("User",                str,        keep_first,   True,  False, f_str,     "User"),
         Field("Partition",           str,        keep_first,   True,  False, f_str,     "Partition"),
         Field("NodeList",            str,        keep_first,   True,  False, f_str,     "Nodes"),
         Field("NNodes",              int,        max,          True,  False, f_str,     "Number of Nodes"),
         Field("ncpus",               int,        max,          True,  False, f_str,     "Cores"),
+        Field("NTasks",              int,        max,          True,  True,  f_str,     "Number of Tasks"),
         Field("State",               str,        append,       True,  False, f_state,   "State"),
         Field("Submit",              str,        keep_first,   True,  False, f_str,     "Submit"),
         Field("start",               date_str,   min,          True,  False, f_date,    "Start"),
@@ -309,13 +318,15 @@ FIELDS = [
         Field("SystemCPU",           str,        max,          True,  False, f_cpu,     "% System (I/O)"),
         Field("ReqMem",              str,        keep_first,   True,  False, f_mem,     "Mem reserved"),
         Field("MaxRSS",              byte_size,  max,          True,  True,  f_rss,     "Max Mem used"),
+        Field("TRESUsageInTot",      tres_mem,   max,          True,  False, f_tres,    "Total memory usage"),
         Field("MaxDiskWrite",        byte_size,  max,          True,  True,  f_dw,      "Max Disk Write"),
         Field("MaxDiskRead",         byte_size,  max,          True,  True,  f_dr,      "Max Disk Read"),
 
-        Field("MaxRSSNode",          str,        append,       False, True,  None,      ""),
-        Field("MaxDiskWriteNode",    str,        append,       False, True,  None,      ""),
-        Field("MaxDiskReadNode",     str,        append,       False, True,  None,      ""),
+        Field("MaxRSSNode",          str,        keep_first,   False, True,  None,      ""),
+        Field("MaxDiskWriteNode",    str,        keep_first,   False, True,  None,      ""),
+        Field("MaxDiskReadNode",     str,        keep_first,   False, True,  None,      ""),
         Field("Comment",             str,        keep_first,   False, False, None,      ""),
+        Field("AveRSS",              byte_size,  max,          False, True,  None,      ""),
         ]
 
 FIELD_NAMES = [f.name for f in FIELDS]
@@ -324,7 +335,7 @@ FIELD_CTORS = [f.ctor for f in FIELDS]
 FIELD_COMB = [f.combinator for f in FIELDS]
 FORMAT_STR = "--format=%s" % (",".join(FIELD_NAMES))
 FORMAT_LIVE_STR = "--format=%s" % (",".join(FIELD_NAMES_LIVE))
-Meta = NT('Meta', FIELD_NAMES + ['dependencies', 'reason'])
+Meta = NT('Meta', FIELD_NAMES + ['maxmemory', 'maxpertask', 'dependencies', 'reason'])
 
 
 def combine(xs):
@@ -333,6 +344,27 @@ def combine(xs):
         for i, comb in enumerate(FIELD_COMB):
             r[i] = comb(r[i], x[i])
     return r
+
+def get_maxmemory(xs):
+    maxmemory = 0
+    maxpertask = "per node"
+    maxnode = ""
+    for row in xs:
+#       if re.search('\.[0-9]',row[FIELD_NAMES.index('JobID')]):
+       if (row[FIELD_NAMES.index('NTasks')] > 1):
+          totalmemory = row[FIELD_NAMES.index('AveRSS')]*row[FIELD_NAMES.index('NTasks')]
+          pertask = "per task"
+          node = row[FIELD_NAMES.index('MaxRSSNode')]
+       else:
+          totalmemory = row[FIELD_NAMES.index('AveRSS')]*row[FIELD_NAMES.index('NNodes')]
+          pertask = "per node"
+          node = row[FIELD_NAMES.index('MaxRSSNode')]
+       if (totalmemory > maxmemory):
+          maxmemory = totalmemory
+          maxpertask = pertask
+          maxnode = node
+          print(maxmemory,maxpertask,maxnode)
+    return (maxmemory, maxpertask, maxnode)
 
 
 def get_values(jobid):
@@ -439,13 +471,18 @@ def get_gpus_usage(nodes, start, end):
 
 
 def main(jobid):
-    y = combine(get_values(jobid))
-    meta = Meta._make(y + ['', ''])
+
+    values = get_values(jobid)
+    (maxmemory, maxpertask, maxnode) = get_maxmemory(values)
+    y = combine(values)
+    meta = Meta._make(y + ['', '', '', ''])
+    meta = meta._replace(MaxRSSNode = maxnode)
     ys = [y]
     if meta.State == "RUNNING" and (os.getuid() == 0 or meta.User == whoami()):
         # get more info from sstat
         tmp = get_live_values("%s,%s.batch" % (jobid, jobid))
         if len(tmp) != 0:
+            (maxmemory, maxpertask, maxnode) = get_maxmemory(tmp)
             ys.append(combine(tmp))
     if meta.State == "PENDING":
         info = subprocess.Popen(
@@ -458,7 +495,8 @@ def main(jobid):
         dependencies = ""
         reason = ""
     y = combine(ys)
-    meta = Meta._make(y + [dependencies, reason])
+    meta = Meta._make(y + [maxmemory, maxpertask, dependencies, reason])
+    meta = meta._replace(MaxRSSNode = maxnode)
 
     for i, (name, parse, comb, show, prefer_live, format,
             desc) in enumerate(FIELDS):
