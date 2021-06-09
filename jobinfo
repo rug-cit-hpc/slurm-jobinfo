@@ -120,7 +120,10 @@ def f_rss(x, meta):
 
 
 def f_tres(x, meta):
-   return "%s" % (format_bs(x))
+   if ("RUNNING" in meta.State):
+      return "%s (From last completed step)" % (format_bs(x))
+   else:
+      return "%s" % (format_bs(x))
 
 
 def f_dw(x, meta):
@@ -326,7 +329,6 @@ FIELDS = [
         Field("MaxDiskWriteNode",    str,        keep_first,   False, True,  None,      ""),
         Field("MaxDiskReadNode",     str,        keep_first,   False, True,  None,      ""),
         Field("Comment",             str,        keep_first,   False, False, None,      ""),
-        Field("AveRSS",              byte_size,  max,          False, True,  None,      ""),
         ]
 
 FIELD_NAMES = [f.name for f in FIELDS]
@@ -335,7 +337,7 @@ FIELD_CTORS = [f.ctor for f in FIELDS]
 FIELD_COMB = [f.combinator for f in FIELDS]
 FORMAT_STR = "--format=%s" % (",".join(FIELD_NAMES))
 FORMAT_LIVE_STR = "--format=%s" % (",".join(FIELD_NAMES_LIVE))
-Meta = NT('Meta', FIELD_NAMES + ['maxmemory', 'maxpertask', 'dependencies', 'reason'])
+Meta = NT('Meta', FIELD_NAMES + ['maxpertask', 'dependencies', 'reason'])
 
 
 def combine(xs):
@@ -345,26 +347,25 @@ def combine(xs):
             r[i] = comb(r[i], x[i])
     return r
 
-def get_maxmemory(xs):
+def get_maxmem_node(xs):
     maxmemory = 0
     maxpertask = "per node"
     maxnode = ""
     for row in xs:
-#       if re.search('\.[0-9]',row[FIELD_NAMES.index('JobID')]):
+       memory = row[FIELD_NAMES.index('MaxRSS')]
+       node = row[FIELD_NAMES.index('MaxRSSNode')]
        if (row[FIELD_NAMES.index('NTasks')] > 1):
-          totalmemory = row[FIELD_NAMES.index('AveRSS')]*row[FIELD_NAMES.index('NTasks')]
           pertask = "per task"
-          node = row[FIELD_NAMES.index('MaxRSSNode')]
        else:
-          totalmemory = row[FIELD_NAMES.index('AveRSS')]*row[FIELD_NAMES.index('NNodes')]
           pertask = "per node"
-          node = row[FIELD_NAMES.index('MaxRSSNode')]
-       if (totalmemory > maxmemory):
-          maxmemory = totalmemory
+       if (memory > maxmemory):
+          maxmemory = memory
           maxpertask = pertask
           maxnode = node
-          print(maxmemory,maxpertask,maxnode)
-    return (maxmemory, maxpertask, maxnode)
+    if maxmemory==0:
+       maxnode = "Unknown"
+       maxpertask = "Unknown"
+    return (maxnode, maxpertask)
 
 
 def get_values(jobid):
@@ -473,16 +474,16 @@ def get_gpus_usage(nodes, start, end):
 def main(jobid):
 
     values = get_values(jobid)
-    (maxmemory, maxpertask, maxnode) = get_maxmemory(values)
+    (maxnode, maxpertask) = get_maxmem_node(values)
     y = combine(values)
-    meta = Meta._make(y + ['', '', '', ''])
+    meta = Meta._make(y + ['', '', ''])
     meta = meta._replace(MaxRSSNode = maxnode)
     ys = [y]
     if meta.State == "RUNNING" and (os.getuid() == 0 or meta.User == whoami()):
         # get more info from sstat
         tmp = get_live_values("%s,%s.batch" % (jobid, jobid))
         if len(tmp) != 0:
-            (maxmemory, maxpertask, maxnode) = get_maxmemory(tmp)
+            (maxnode, maxpertask) = get_maxmem_node(tmp)
             ys.append(combine(tmp))
     if meta.State == "PENDING":
         info = subprocess.Popen(
@@ -495,7 +496,7 @@ def main(jobid):
         dependencies = ""
         reason = ""
     y = combine(ys)
-    meta = Meta._make(y + [maxmemory, maxpertask, dependencies, reason])
+    meta = Meta._make(y + [maxpertask, dependencies, reason])
     meta = meta._replace(MaxRSSNode = maxnode)
 
     for i, (name, parse, comb, show, prefer_live, format,
