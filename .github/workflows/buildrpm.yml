@@ -20,6 +20,20 @@ jobs:
           cp jobinfo pynumparser.py jobinfo-${version}
           tar -czf SOURCES/jobinfo-${version}.tar.gz jobinfo-${version}
 
-      - name: rpmbuild
-        uses: ./.github/actions/rpmbuild/
-        #uses: robertdebock/rpmbuild-action@1.0.0
+      - name: rpmbuild centos7
+        uses: ./.github/actions/rpmbuild-centos7/
+
+      - name: upload rpm package as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: RPM package
+          path: ${{ github.workspace }}/noarch/jobinfo*.rpm
+
+      - name: rpmbuild centos8
+        uses: ./.github/actions/rpmbuild-centos8/
+
+      - name: upload rpm package as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: RPM package
+          path: ${{ github.workspace }}/noarch/jobinfo*.rpm

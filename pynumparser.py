@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 # Works with either Python v2.7+ or v3.3+
 #

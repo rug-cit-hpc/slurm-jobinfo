@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3.6
 # -*- coding: utf-8 -*-
 #
 # jobinfo - collect job information from slurm in nicely readable format
@@ -11,8 +11,6 @@
 #
 # LICENSE: MIT
 
-from __future__ import print_function
-from __future__ import division
 from collections import namedtuple as NT
 import datetime
 import json
@@ -39,7 +37,7 @@ ignore_partitions = ['gpu', 'gpushort'] # Partitions for which to ignore memory 
 try:
     import pynumparser
 except ImportError:
-    sys.path.append('/usr/lib/python2.7/site-packages/')
+    sys.path.append(f'/usr/lib/python3.{sys.version_info.minor}/site-packages/')
     import pynumparser
 
 def append(l, x):
@@ -198,13 +196,16 @@ def memory_to_bytes(memory_spec, cores_per_node):
       memory_req = memory_req*cores_per_node
    return memory_req
 
+
 def get_cpus_node(nodenames):
-    nodename=nodenames.split(',')[-1]
-    info = subprocess.Popen(['scontrol', 'show','node', nodename],stdout=subprocess.PIPE)
-    for line in info.stdout:
-        if 'CfgTRES' in line:
-            cpucount = re.search('cpu=(\d+)',line).group(1)
-    return cpucount
+    nodename = nodenames.split(',')[-1]
+    info = subprocess.Popen(['scontrol', 'show', '-o', 'node', nodename], stdout=subprocess.PIPE)
+    num_cpus_match = re.search('cpu=(\d+)', info.stdout.read().decode('UTF-8'))
+    if num_cpus_match:
+        return int(num_cpus_match.group(1))
+    else:
+        return 1
+
 
 def get_hints(meta):
     if meta.end.lower() == 'unknown':
@@ -254,7 +255,7 @@ def get_hints(meta):
             hints.append(
                ["You requested much more memory than your program used.",
                 "Please reduce the requested amount of memory."]
-            ) 
+            )
 
     if len(hints)>0:
         print("Hints and tips      :")
@@ -270,6 +271,7 @@ def get_hints(meta):
             hint_number = hint_number + 1
         print(" *) For more information on these issues see:")
         print("    https://wiki.hpc.rug.nl/peregrine/additional_information/job_hints")
+
 
 def efficiency(meta):
     cputime_secs = elapsed_to_seconds(meta.TotalCPU)
@@ -334,8 +336,9 @@ def combine(xs):
 
 
 def get_values(jobid):
+    sacct_cmd = ['sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid]
     info = subprocess.Popen(
-        ['sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603'.encode('UTF-8'), '-j', jobid],
+        map(lambda s: s.encode('utf-8'), sacct_cmd),
         stdout=subprocess.PIPE)
     xs = []
     for line in info.stdout:

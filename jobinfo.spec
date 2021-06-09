@@ -9,7 +9,8 @@ URL: https://github.com/rug-cit-ris/slurm-jobinfo
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python python-requests
+Requires: python3 %{py3_dist requests}
+BuildRequires:  python%{python3_pkgversion}-devel
 
 %description
 jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM commands to give a uniform interface for both current and historical jobs.
@@ -21,16 +22,19 @@ jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM 
 #make
 
 %install
-mkdir -p $RPM_BUILD_ROOT/usr/bin
-mkdir -p $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
-install jobinfo $RPM_BUILD_ROOT/usr/bin/jobinfo
-install pynumparser.py $RPM_BUILD_ROOT/usr/lib/python2.7/site-packages
+mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}%{python3_sitelib}
+install jobinfo %{buildroot}%{_bindir}/jobinfo
+install pynumparser.py %{buildroot}%{python3_sitelib}
+
+%py_byte_compile %{__python3} %{buildroot}%{python3_sitelib}/pynumparser.py
 
 %files
 %defattr(-,root,root)
-#%doc README
-/usr/bin/jobinfo
-/usr/lib/python2.7/site-packages/pynumparser.py*
+%{_bindir}/jobinfo
+#%pycached %{python3_sitelib}/pynumparser.py
+%{python3_sitelib}/pynumparser.py
+%{python3_sitelib}/__pycache__/pynumparser.cpython-%{python3_version_nodots}*.pyc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
