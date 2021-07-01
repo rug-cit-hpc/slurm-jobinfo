@@ -68,7 +68,7 @@ def time_min(a, b):
 def tres_mem(s=None):
     if s is None:
        return 0.0
-    memval = byte_size(re.search(r'(?<=mem=)[0-9]+[KMGT]', s).group(0))
+    memval = byte_size(re.search(r'(?<=,mem=)([0-9]+[KMGTPE]?)(,)', s).group(1))
     return memval
 
 
@@ -370,8 +370,8 @@ def get_max_node(xs, parameter):
           maxpertask = pertask
           maxnode = node
     if maxvalue==0:
-       maxnode = "Unknown"
-       maxpertask = "Unknown"
+       maxnode = "Node unknown"
+       maxpertask = "N/A"
     return (maxnode, maxpertask)
 
 
