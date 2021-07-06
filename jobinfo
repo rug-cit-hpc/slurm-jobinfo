@@ -57,7 +57,6 @@ def time_max(a, b):
         return a
     return max(a, b)
 
-
 def time_min(a, b):
     if a in ['', 'INVALID', 'UNLIMITED']:
         return b
@@ -65,11 +64,32 @@ def time_min(a, b):
         return a
     return max(a, b)
 
+def maxtot(a,b):
+    c = max(a[0],b[0])
+    d = a[1] + b[1]
+    return(c,d)
+
+def add(a,b):
+    return a + b
+
 def tres_mem(s=None):
     if s is None:
        return 0.0
     memval = byte_size(re.search(r'(?<=,mem=)([0-9\.]+[KMGTPE]?)(,)', s).group(1))
     return memval
+
+def tres_disk(s=None):
+    if s is None:
+       return 0.0
+    memval = byte_size(re.search(r'(?<=,fs\/disk=)([0-9\.]+[KMGTPE]?)', s).group(1))
+    return memval
+
+def tres_mem_d(s=None):
+    if s is None:
+       return (0.0,0.0)
+    memval = byte_size(re.search(r'(?<=,mem=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
+    diskval = byte_size(re.search(r'(?<=,fs\/disk=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
+    return (memval, diskval)
 
 
 def byte_size(s=None):
@@ -119,12 +139,19 @@ def f_rss(x, meta):
     return "%s (%s, %s)" % (format_bs(x), meta.MaxRSSNode, meta.MaxMemPerTask)
 
 
-def f_tres(x, meta):
+def f_tres_i(x, meta):
    if ("RUNNING" in meta.State):
-      return "%s (From last completed step)" % (format_bs(x))
+      return "%s (From last completed step)\n" \
+             "Total Disk Read     : %s (Until last completed step)" % (format_bs(x[0]), format_bs(x[1]))
    else:
-      return "%s" % (format_bs(x))
+      return "%s\n" \
+             "Total Disk Read     : %s" % (format_bs(x[0]),format_bs(x[1]))
 
+def f_tres_o(x, meta):
+   if ("RUNNING" in meta.State):
+      return "%s (From last completed step)\n" % format_bs(x)
+   else:
+      return "%s" % format_bs(x)
 
 def f_dw(x, meta):
     return "%s (%s, %s)" % (format_bs(x), meta.MaxDiskWriteNode, meta.MaxDiskWritePerTask)
@@ -269,7 +296,7 @@ def get_hints(meta):
     if cores_per_node < cores_max_node:
     # Check if more than 80% of the memory has been used and that less than min_memory
     # per core has been left unused
-        if (meta.TRESUsageInTot/req_memory) < 0.8 and (req_memory - meta.TRESUsageInTot) > min_memory*ncpus:
+        if (meta.TRESUsageInTot[0]/req_memory) < 0.8 and (req_memory - meta.TRESUsageInTot[0]) > min_memory*ncpus:
             hints.append(
                ["You requested much more memory than your program used.",
                 "Please reduce the requested amount of memory."]
@@ -328,9 +355,10 @@ FIELDS = [
         Field("SystemCPU",           str,        max,          True,  False, f_cpu,     "% System (I/O)"),
         Field("ReqMem",              str,        keep_first,   True,  False, f_mem,     "Mem reserved"),
         Field("MaxRSS",              byte_size,  max,          True,  True,  f_rss,     "Max Mem used"),
-        Field("TRESUsageInTot",      tres_mem,   max,          True,  False, f_tres,    "Total memory usage"),
-        Field("MaxDiskWrite",        byte_size,  max,          True,  True,  f_dw,      "Max Disk Write"),
-        Field("MaxDiskRead",         byte_size,  max,          True,  True,  f_dr,      "Max Disk Read"),
+        Field("TRESUsageInTot",      tres_mem_d, maxtot,       True,  False, f_tres_i,  "Total memory usage"),
+        Field("TRESUsageOutTot",     tres_disk,  add,          True,  False, f_tres_o,  "Total Disk Write"),
+        Field("MaxDiskWrite",        byte_size,  max,          False, True,  f_dw,      "Max Disk Write"),
+        Field("MaxDiskRead",         byte_size,  max,          False, True,  f_dr,      "Max Disk Read"),
 
         Field("MaxRSSNode",          str,        keep_first,   False, True,  None,      ""),
         Field("MaxDiskWriteNode",    str,        keep_first,   False, True,  None,      ""),
