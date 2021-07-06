@@ -355,7 +355,7 @@ FIELDS = [
         Field("SystemCPU",           str,        max,          True,  False, f_cpu,     "% System (I/O)"),
         Field("ReqMem",              str,        keep_first,   True,  False, f_mem,     "Mem reserved"),
         Field("MaxRSS",              byte_size,  max,          True,  True,  f_rss,     "Max Mem used"),
-        Field("TRESUsageInTot",      tres_mem_d, maxtot,       True,  False, f_tres_i,  "Total memory usage"),
+        Field("TRESUsageInTot",      tres_mem_d, maxtot,       True,  False, f_tres_i,  "Total Memory usage"),
         Field("TRESUsageOutTot",     tres_disk,  add,          True,  False, f_tres_o,  "Total Disk Write"),
         Field("MaxDiskWrite",        byte_size,  max,          False, True,  f_dw,      "Max Disk Write"),
         Field("MaxDiskRead",         byte_size,  max,          False, True,  f_dr,      "Max Disk Read"),
