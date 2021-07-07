@@ -25,7 +25,7 @@ import time
 
 # Parameters affecting when hints about job performance will be given.
 min_walltime = 180          # Minimum walltime needed before printing job hints
-min_memory = 1*1024**3      # Minimum amount of memory that may be left unused per core
+min_memory = 1.5*1024**3      # Minimum amount of memory that may be left unused per core
 ignore_partitions = ['gpu', 'gpushort'] # Partitions for which to ignore memory and cpu usage, e.g. GPU partitions
                             # where GPU usage is more important, or where full or partial 
                             # nodes are allocated anyway.
@@ -296,7 +296,7 @@ def get_hints(meta):
     if cores_per_node < cores_max_node:
     # Check if more than 80% of the memory has been used and that less than min_memory
     # per core has been left unused
-        if (meta.TRESUsageInTot[0]/req_memory) < 0.8 and (req_memory - meta.TRESUsageInTot[0]) > min_memory*ncpus:
+        if (meta.TRESUsageInTot[0]/req_memory) < 0.75 and (req_memory - meta.TRESUsageInTot[0]) > min_memory:
             hints.append(
                ["You requested much more memory than your program used.",
                 "Please reduce the requested amount of memory."]
