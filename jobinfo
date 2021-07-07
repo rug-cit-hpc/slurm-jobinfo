@@ -141,7 +141,7 @@ def f_rss(x, meta):
 
 def f_tres_i(x, meta):
    if ("RUNNING" in meta.State):
-      return "%s (From last completed step)\n" \
+      return "%s (Until last completed step)\n" \
              "Total Disk Read     : %s (Until last completed step)" % (format_bs(x[0]), format_bs(x[1]))
    else:
       return "%s\n" \
@@ -149,7 +149,7 @@ def f_tres_i(x, meta):
 
 def f_tres_o(x, meta):
    if ("RUNNING" in meta.State):
-      return "%s (From last completed step)\n" % format_bs(x)
+      return "%s (Until last completed step)\n" % format_bs(x)
    else:
       return "%s" % format_bs(x)
 
@@ -354,8 +354,8 @@ FIELDS = [
         Field("UserCPU",             str,        max,          True,  False, f_cpu,     "% User (Computation)"),
         Field("SystemCPU",           str,        max,          True,  False, f_cpu,     "% System (I/O)"),
         Field("ReqMem",              str,        keep_first,   True,  False, f_mem,     "Mem reserved"),
-        Field("MaxRSS",              byte_size,  max,          True,  True,  f_rss,     "Max Mem used"),
-        Field("TRESUsageInTot",      tres_mem_d, maxtot,       True,  False, f_tres_i,  "Total Memory usage"),
+        Field("MaxRSS",              byte_size,  max,          True,  True,  f_rss,     "Max Mem (Node/step)"),
+        Field("TRESUsageInTot",      tres_mem_d, maxtot,       True,  False, f_tres_i,  "Full Max Mem usage"),
         Field("TRESUsageOutTot",     tres_disk,  add,          True,  False, f_tres_o,  "Total Disk Write"),
         Field("MaxDiskWrite",        byte_size,  max,          False, True,  f_dw,      "Max Disk Write"),
         Field("MaxDiskRead",         byte_size,  max,          False, True,  f_dr,      "Max Disk Read"),
