@@ -6,17 +6,18 @@ usage() {
    echo "   -f filename : Read jobids from file"
    echo "   -o filename : Write jobids obtained from job database to file"
    echo "   -n number   : Use each nth job from slurm database output, default 100"
-   echo "   -d date     : Look at jobs starting from this date yyyy-mm-dd"
+   echo "   -s date     : Look at jobs starting from this date yyyy-mm-dd, default today"
+   echo "   -e date     : Look at jobs until this date yyyy-mm-dd, default today"
    exit;
 }
 
 getjobs() {
-   sacct -nap --start=$date | awk -F '|' '{print $1}' | grep -v '\.batch' | awk "NR % ${skip} == 0"
+   sacct -nap --start=${date} --end=${enddate} | awk -F '|' '{print $1}' | grep -v '\.batch' | awk "NR % ${skip} == 0"
 }
 
 skip=100
 
-while getopts “f:o:d:n:h” arg; do
+while getopts “f:o:s:e:n:h” arg; do
   case ${arg} in
     f)
        fname=${OPTARG}
@@ -24,8 +25,11 @@ while getopts “f:o:d:n:h” arg; do
     o)
        oname=${OPTARG}
        ;;
-    d)
-       date=${OPTARG}
+    s)
+       startdate=${OPTARG}
+       ;;
+    e)
+       enddate=${OPTARG}
        ;;
     n)
        skip=${OPTARG}
@@ -40,11 +44,13 @@ while getopts “f:o:d:n:h” arg; do
 done
 
 if [ -z ${fname} ]; then
-   if [ -z ${date} ]; then
-      echo "ERROR: Starting date not set"
-      usage
+   if [ -z ${startdate} ]; then
+      startdate=$( date -I)
    fi
-   echo "Generating a list of jobs from ${date} and taking each ${skip} job"
+   if [ -z ${enddate} ]; then
+      enddate=$( date -I)
+   fi
+   echo "Generating a list of jobs from ${startdate} until ${enddate} and taking each ${skip} job"
    if [ -z ${oname} ]; then
       jobs=$( getjobs )
    else
