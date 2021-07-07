@@ -520,9 +520,9 @@ def main(jobid):
         # get more info from sstat
         tmp = get_live_values("%s,%s.batch" % (jobid, jobid))
         if len(tmp) != 0:
-            (max_mem_node, MaxMemPerTask) = get_max_node(values, 'MaxRSS')
-            (max_dw_node, MaxDiskWritePerTask) = get_max_node(values, 'MaxDiskWrite')
-            (max_dr_node, MaxDiskReadPerTask) = get_max_node(values, 'MaxDiskRead')
+            (max_mem_node, MaxMemPerTask) = get_max_node(tmp, 'MaxRSS')
+            (max_dw_node, MaxDiskWritePerTask) = get_max_node(tmp, 'MaxDiskWrite')
+            (max_dr_node, MaxDiskReadPerTask) = get_max_node(tmp, 'MaxDiskRead')
             ys.append(combine(tmp))
     if meta.State == "PENDING":
         info = subprocess.Popen(
