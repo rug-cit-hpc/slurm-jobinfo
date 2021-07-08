@@ -21,4 +21,4 @@ jobs:
         pip install pytest pytest-mock requests
 
     - name: run tests
-      run: pytest test
+      run: pytest -v $PWD/test
