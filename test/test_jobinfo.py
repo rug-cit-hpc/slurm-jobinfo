@@ -6,8 +6,11 @@ import os
 import pytest
 import re
 
+# Location of test script
+test_script_dir = os.path.dirname(os.path.realpath(__file__))
+
 # Directory that contains the input files for the tests.
-DATA_DIR = 'data'
+DATA_DIR = os.path.join(test_script_dir, 'data')
 # Filenames of the input files.
 SACCT_FILE = 'sacct.txt'
 SSTAT_FILE = 'sstat.txt'
@@ -15,10 +18,10 @@ SQUEUE_FILE = 'squeue.txt'
 SCONTROL_FILE = 'scontrol.txt'
 
 # This is not a proper module, so use importlib to load the sources.
-pynumparser_loader = importlib.machinery.SourceFileLoader('pynumparser', '../pynumparser.py')
+pynumparser_loader = importlib.machinery.SourceFileLoader('pynumparser', os.path.join(test_script_dir, '../pynumparser.py'))
 pynumparser = pynumparser_loader.load_module()
 
-jobinfo_loader = importlib.machinery.SourceFileLoader('jobinfo', '../jobinfo')
+jobinfo_loader = importlib.machinery.SourceFileLoader('jobinfo', os.path.join(test_script_dir, '../jobinfo'))
 jobinfo = jobinfo_loader.load_module()
 
 # Structure to represent real subprocess.popen return values.
