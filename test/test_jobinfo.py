@@ -4,6 +4,7 @@ import importlib
 import io
 import os
 import pytest
+import random
 import re
 
 # Location of test script
@@ -107,3 +108,37 @@ def test_jobinfo(jobid, mocker):
     jobinfo.main(jobid)
 
 # TODO: implement more fine-grained (unit) tests for different functions.
+def test_parse_gpu_string():
+    assert jobinfo.parse_gpu_string('mycluster-gpunode42') == ['mycluster-gpunode42']
+    assert jobinfo.parse_gpu_string('mycluster-gpu[01-05]') == ['mycluster-gpu0' + str(i) for i in range(1,6)]
+    assert jobinfo.parse_gpu_string('mycluster-gpu[01-03,40-42]') == ['mycluster-gpu01', 'mycluster-gpu02', 'mycluster-gpu03',
+                                                                      'mycluster-gpu40', 'mycluster-gpu41', 'mycluster-gpu42']
+
+
+def test_get_gpu_usage(mocker):
+    usage = b'[[0, 0], [1, 0], [2, 0], [3, 0]]' # 0%
+    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
+    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
+    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == 0
+
+    usage = b'[[0, 0], [1, 100], [2, 100], [3, 0]]' # 50%
+    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
+    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
+    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == 50
+
+    usage = b'[[0, 100], [1, 100], [2, 100], [3, 100]]' # 100%
+    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
+    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
+    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == 100
+
+    usage = b'[]' # no data -> should return -1
+    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
+    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
+    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == -1
+
+
+def test_get_gpus_usage(mocker):
+    usage1 = b'[[0, 0], [1, 100], [2, 100], [3, 0]]' # 50%
+    ret_value_content = b'{"data":{"result":[{"values":' + usage1 + b'}]}}'
+    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
+    assert jobinfo.get_gpus_usage('my-gpu[01-02]', 'start', 'end') == [('my-gpu01', 50), ('my-gpu02', 50)]
