@@ -24,9 +24,12 @@ pynumparser = pynumparser_loader.load_module()
 jobinfo_loader = importlib.machinery.SourceFileLoader('jobinfo', os.path.join(test_script_dir, '../jobinfo'))
 jobinfo = jobinfo_loader.load_module()
 
-# Structure to represent real subprocess.popen return values.
+# Structure to represent return values for subprocess and requests calls.
 Subprocess = namedtuple('Subprocess', ['stdout'])
+Request = namedtuple('Request', ['content'])
 
+# GPU usage values for mocked call to Prometheus
+GPU_USAGE_VALUES = b'[[0,"50"], [1,"100"]]'
 
 def sacct_output(jobid):
     '''Mock call to sacct by reading from a file.'''
@@ -100,8 +103,7 @@ def test_jobinfo(jobid, mocker):
     '''Test jobinfo on a given jobid.'''
     mocker.patch('subprocess.Popen', side_effect=popen_side_effect)
     mocker.patch('os.getuid', return_value=0)
+    mocker.patch('requests.get', return_value=Request(content=b'{"data":{"result":[{"values":' + GPU_USAGE_VALUES + b'}]}}'))
     jobinfo.main(jobid)
-
-# TODO: add gpu jobs, mock the calls to prometheus
 
 # TODO: implement more fine-grained (unit) tests for different functions.
