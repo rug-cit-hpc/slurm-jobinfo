@@ -157,14 +157,14 @@ def f_tres_i(x, meta):
                )
     else:
         return "%s\n" \
-               "Total Disk Read     : %s" % (format_bs(x[0]),format_bs(x[1]))
+               "Total Disk Read     : %s" % (format_bs(x[0]), format_bs(x[1]))
 
 
 def f_tres_o(x, meta):
-   if "RUNNING" in meta.State:
-      return "%s (Until last completed step)\n" % format_bs(x)
-   else:
-      return "%s" % format_bs(x)
+    if "RUNNING" in meta.State:
+        return "%s (Until last completed step)\n" % format_bs(x)
+    else:
+        return "%s" % format_bs(x)
 
 
 def f_dw(x, meta):
