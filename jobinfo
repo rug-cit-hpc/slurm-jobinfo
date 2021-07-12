@@ -70,13 +70,13 @@ def time_min(a, b):
     return max(a, b)
 
 
-def maxtot(a,b):
-    c = max(a[0],b[0])
+def maxtot(a, b):
+    c = max(a[0], b[0])
     d = a[1] + b[1]
-    return(c,d)
+    return (c, d)
 
 
-def add(a,b):
+def add(a, b):
     return a + b
 
 
@@ -96,7 +96,7 @@ def tres_disk(s=None):
 
 def tres_mem_d(s=None):
     if s is None:
-       return (0.0,0.0)
+       return (0.0, 0.0)
     memval = byte_size(re.search(r'(?<=,mem=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
     diskval = byte_size(re.search(r'(?<=,fs\/disk=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
     return (memval, diskval)
