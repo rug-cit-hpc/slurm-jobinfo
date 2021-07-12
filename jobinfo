@@ -324,9 +324,9 @@ def get_hints(meta):
             hint_line = 1
             for line in hint:
                 if hint_line == 1:
-                    print (" %i) %s" % (hint_number, line))
+                    print(" %i) %s" % (hint_number, line))
                 else:
-                    print ("    %s" % line)
+                    print("    %s" % line)
                 hint_line = hint_line + 1
             hint_number = hint_number + 1
         print(" *) For more information on these issues see:")
