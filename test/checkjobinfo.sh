@@ -65,5 +65,5 @@ fi
 
 
 for job in ${jobs}; do
-   ./jobinfo ${job}
+   ../jobinfo ${job}
 done
