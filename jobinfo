@@ -388,7 +388,8 @@ FORMAT_STR = "--format=%s" % (",".join(FIELD_NAMES))
 FORMAT_LIVE_STR = "--format=%s" % (",".join(FIELD_NAMES_LIVE))
 Meta = NT(
     'Meta',
-    FIELD_NAMES + ['MaxMemPerTask', 'MaxDiskWritePerTask', 'MaxDiskReadPerTask', 'dependencies', 'reason']
+    FIELD_NAMES
+    + ['MaxMemPerTask', 'MaxDiskWritePerTask', 'MaxDiskReadPerTask', 'dependencies', 'reason']
 )
 
 
