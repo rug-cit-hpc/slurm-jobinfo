@@ -279,13 +279,13 @@ def get_hints(meta):
     # CPU efficiency
     ncpus = meta.ncpus
     eff = 100 * cputime_secs / (ncpus * walltime_secs)
-    if (eff < 75):
-        if (ncpus == 1):
+    if eff < 75:
+        if ncpus == 1:
             hints.append(
                 ["The program efficiency is low.",
                  "Check the file in- and output pattern of your application."]
             )
-        elif (eff <= (100.0 / ncpus)):
+        elif eff <= (100.0 / ncpus):
             hints.append(
                 ["The program efficiency is very low. Your program does not seem to run in",
                  "parallel. Please check the program documentation to see how to make the",
