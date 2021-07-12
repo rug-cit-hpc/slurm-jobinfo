@@ -4,7 +4,7 @@ import os
 import random
 import re
 import string
-import sys
+
 
 # Name of the original input files, see README.md for more information on how to generate them.
 SACCT_FILE = 'sacct.txt'
@@ -30,7 +30,7 @@ sacct_lines_anon = []
 
 def random_job_name():
     '''Return a random job name between 3 and 15 characters.'''
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(3,15))).encode('UTF-8')
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(3, 15))).encode('UTF-8')
 
 
 def find_usernames():
@@ -52,7 +52,7 @@ def find_cluster_prefixes():
     with open(SCONTROL_FILE, 'rb') as scontrol_file:
         scontrol = scontrol_file.read()
     # Find all nodenames.
-    nodes = re.findall(b'NodeName=(\S+)', scontrol)
+    nodes = re.findall(rb'NodeName=(\S+)', scontrol)
     # Find the prefix by splitting by the hypen symbol.
     prefixes = [node.split(b'-', 1)[0] for node in nodes]
     # Return a list of unique prefixes.
@@ -78,11 +78,11 @@ def anonymise(file, usernames, cluster_prefixes):
         contents = contents.replace(username, username_anon)
 
     for cluster_prefix, cluster_prefix_anon in generate_anonymised_cluster_prefixes(cluster_prefixes).items():
-        contents = contents.replace(cluster_prefix + b'-', CLUSTER_PREFIX_ANON + b'-')
+        contents = contents.replace(cluster_prefix + b'-', cluster_prefix_anon + b'-')
 
     # For the scontrol dump, let's remove other fields containing possibly sensitive information (e.g. kernel versions).
     if file == SCONTROL_FILE:
-        contents = b'\n'.join([b' '.join(groups) for groups in re.findall(b'(NodeName=\S+) .* (CfgTRES=\S+) .*', contents)])
+        contents = b'\n'.join([b' '.join(groups) for groups in re.findall(rb'(NodeName=\S+) .* (CfgTRES=\S+) .*', contents)])
 
     # For sacct, we also remove the name of the job.
     if file == SACCT_FILE:
