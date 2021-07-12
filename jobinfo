@@ -82,21 +82,21 @@ def add(a, b):
 
 def tres_mem(s=None):
     if s is None:
-       return 0.0
+        return 0.0
     memval = byte_size(re.search(r'(?<=,mem=)([0-9\.]+[KMGTPE]?)(,)', s).group(1))
     return memval
 
 
 def tres_disk(s=None):
     if s is None:
-       return 0.0
+        return 0.0
     memval = byte_size(re.search(r'(?<=,fs\/disk=)([0-9\.]+[KMGTPE]?)', s).group(1))
     return memval
 
 
 def tres_mem_d(s=None):
     if s is None:
-       return (0.0, 0.0)
+        return (0.0, 0.0)
     memval = byte_size(re.search(r'(?<=,mem=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
     diskval = byte_size(re.search(r'(?<=,fs\/disk=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
     return (memval, diskval)
@@ -150,12 +150,14 @@ def f_rss(x, meta):
 
 
 def f_tres_i(x, meta):
-   if ("RUNNING" in meta.State):
-      return "%s (Until last completed step)\n" \
-             "Total Disk Read     : %s (Until last completed step)" % (format_bs(x[0]), format_bs(x[1]))
-   else:
-      return "%s\n" \
-             "Total Disk Read     : %s" % (format_bs(x[0]),format_bs(x[1]))
+    if ("RUNNING" in meta.State):
+        return "%s (Until last completed step)\n" \
+               "Total Disk Read     : %s (Until last completed step)" % (
+                   format_bs(x[0]), format_bs(x[1])
+               )
+    else:
+        return "%s\n" \
+               "Total Disk Read     : %s" % (format_bs(x[0]),format_bs(x[1]))
 
 
 def f_tres_o(x, meta):
