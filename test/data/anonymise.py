@@ -61,12 +61,12 @@ def find_cluster_prefixes():
 
 def generate_anonymised_usernames(usernames):
     '''Make a mapping from original usernames to anonymised ones.'''
-    return {user: USERNAME_PREFIX_ANON + b'%d' % (i+1) for user, i in zip(usernames, range(len(usernames)))}
+    return {user: USERNAME_PREFIX_ANON + b'%d' % (i+1) for i, user in enumerate(usernames)}
 
 
 def generate_anonymised_cluster_prefixes(cluster_prefixes):
     '''Make a mapping from original cluster prefixes to anonymised ones.'''
-    return {prefix: CLUSTER_PREFIX_ANON + b'%d' % (i+1) for prefix, i in zip(cluster_prefixes, range(len(cluster_prefixes)))}
+    return {prefix: CLUSTER_PREFIX_ANON + b'%d' % (i+1) for i, prefix in enumerate(cluster_prefixes)}
 
 
 def anonymise(file, usernames, cluster_prefixes):
