@@ -253,7 +253,7 @@ def get_total_memory_request(memory_spec, ncpus, nnodes):
 def get_cpus_node(nodenames):
     nodename = nodenames.split(',')[-1]
     info = subprocess.Popen(['scontrol', 'show', '-o', 'node', nodename], stdout=subprocess.PIPE)
-    num_cpus_match = re.search('cpu=(\d+)', info.stdout.read().decode('UTF-8'))
+    num_cpus_match = re.search(r'cpu=(\d+)', info.stdout.read().decode('UTF-8'))
     if num_cpus_match:
         return int(num_cpus_match.group(1))
     else:
@@ -459,7 +459,7 @@ def parse_gpu_string(node_string):
     Parses a string in the format of.
     pg-gpu[1-3] or pg-gpu[2,4,5]
     """
-    match = re.search('(.+\[)([0-9]|-|,)+?(?=\])', node_string)
+    match = re.search(r'(.+\[)([0-9]|-|,)+?(?=\])', node_string)
     if match is None:
         return [node_string]
 
