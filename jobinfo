@@ -25,9 +25,9 @@ import time
 
 
 # Parameters affecting when hints about job performance will be given.
-min_walltime = 180          # Minimum walltime needed before printing job hints
-min_memory = 1.5*1024**3      # Minimum amount of memory that may be left unused per core
-ignore_partitions = ['gpu', 'gpushort'] # Partitions for which to ignore memory and cpu usage,
+MIN_WALLTIME = 180          # Minimum walltime needed before printing job hints
+MIN_MEMORY = 1.5*1024**3      # Minimum amount of memory that may be left unused per core
+IGNORE_PARTITIONS = ['gpu', 'gpushort'] # Partitions for which to ignore memory and cpu usage,
                             # e.g. GPU partitions where GPU usage is more important,
                             # or where full or partial nodes are allocated anyway.
 
@@ -124,12 +124,10 @@ def format_bs(x):
     return "%.2f%s" % (x / 2**(10 * e), postfix[e])
 
 
-# Format: [DD-[hh:]]mm:ss
-time_parts = re.compile(r'(((?P<days>\d+)-)?(?P<hours>\d\d):)?' +
-                        r'(?P<minutes>\d\d):(?P<seconds>\d\d(\.\d+)?)')
-
-
 def parse_time(t):
+    # Format: [DD-[hh:]]mm:ss
+    time_parts = re.compile(r'(((?P<days>\d+)-)?(?P<hours>\d\d):)?' +
+                            r'(?P<minutes>\d\d):(?P<seconds>\d\d(\.\d+)?)')
     m = time_parts.match(t)
     if m is None:
         return 0.0, 0, 0, 0
@@ -269,9 +267,9 @@ def get_hints(meta):
     cputime_secs = elapsed_to_seconds(meta.TotalCPU)
     walltime_secs = elapsed_to_seconds(meta.elapsed)
     # Ignore jobs without or too little time
-    if cputime_secs == 0 or walltime_secs < min_walltime:
+    if cputime_secs == 0 or walltime_secs < MIN_WALLTIME:
         return
-    if meta.Partition in ignore_partitions:
+    if meta.Partition in IGNORE_PARTITIONS:
         return
 
     hints = []
@@ -308,10 +306,10 @@ def get_hints(meta):
     req_memory = get_total_memory_request(meta.ReqMem, ncpus, meta.NNodes)
     # If we have requested a full node, don't bother because all the memory is available.
     if cores_per_node < cores_max_node:
-    # Check if more than 80% of the memory has been used and that less than min_memory
+    # Check if more than 80% of the memory has been used and that less than MIN_MEMORY
     # per core has been left unused
         if ((meta.TRESUsageInTot[0]/req_memory) < 0.75
-                and (req_memory - meta.TRESUsageInTot[0]) > min_memory):
+                and (req_memory - meta.TRESUsageInTot[0]) > MIN_MEMORY):
             hints.append(
                 ["You requested much more memory than your program used.",
                  "Please reduce the requested amount of memory."]
