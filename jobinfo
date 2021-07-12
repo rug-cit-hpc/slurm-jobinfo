@@ -534,7 +534,9 @@ def main(jobid):
     (max_dr_node, MaxDiskReadPerTask) = get_max_node(values, 'MaxDiskRead')
     y = combine(values)
     meta = Meta._make(y + ['', '', '', '', ''])
-    meta = meta._replace(MaxRSSNode = max_mem_node, MaxDiskWriteNode = max_dw_node, MaxDiskReadNode = max_dr_node)
+    meta = meta._replace(
+        MaxRSSNode=max_mem_node, MaxDiskWriteNode=max_dw_node, MaxDiskReadNode=max_dr_node
+    )
     ys = [y]
     if meta.State == "RUNNING" and (os.getuid() == 0 or meta.User == whoami()):
         # get more info from sstat
@@ -555,8 +557,12 @@ def main(jobid):
         dependencies = ""
         reason = ""
     y = combine(ys)
-    meta = Meta._make(y + [MaxMemPerTask, MaxDiskWritePerTask, MaxDiskReadPerTask,  dependencies, reason])
-    meta = meta._replace(MaxRSSNode = max_mem_node, MaxDiskWriteNode = max_dw_node, MaxDiskReadNode = max_dr_node)
+    meta = Meta._make(
+        y + [MaxMemPerTask, MaxDiskWritePerTask, MaxDiskReadPerTask,  dependencies, reason]
+    )
+    meta = meta._replace(
+        MaxRSSNode=max_mem_node, MaxDiskWriteNode=max_dw_node, MaxDiskReadNode=max_dr_node
+    )
 
     for i, (name, parse, comb, show, prefer_live, format,
             desc) in enumerate(FIELDS):
