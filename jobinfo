@@ -310,13 +310,14 @@ def get_hints(meta):
     if cores_per_node < cores_max_node:
     # Check if more than 80% of the memory has been used and that less than min_memory
     # per core has been left unused
-        if (meta.TRESUsageInTot[0]/req_memory) < 0.75 and (req_memory - meta.TRESUsageInTot[0]) > min_memory:
+        if ((meta.TRESUsageInTot[0]/req_memory) < 0.75
+                and (req_memory - meta.TRESUsageInTot[0]) > min_memory):
             hints.append(
                 ["You requested much more memory than your program used.",
                  "Please reduce the requested amount of memory."]
             )
 
-    if len(hints)>0:
+    if len(hints) > 0:
         print("Hints and tips      :")
         hint_number = 1
         for hint in hints:
