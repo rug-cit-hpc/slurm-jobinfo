@@ -3,9 +3,9 @@ from collections import namedtuple
 import importlib
 import io
 import os
-import pytest
-import random
 import re
+import pytest
+
 
 # Location of test script
 test_script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -19,10 +19,14 @@ SQUEUE_FILE = 'squeue.txt'
 SCONTROL_FILE = 'scontrol.txt'
 
 # This is not a proper module, so use importlib to load the sources.
-pynumparser_loader = importlib.machinery.SourceFileLoader('pynumparser', os.path.join(test_script_dir, '../pynumparser.py'))
+pynumparser_loader = importlib.machinery.SourceFileLoader(
+    'pynumparser', os.path.join(test_script_dir, '../pynumparser.py')
+)
 pynumparser = pynumparser_loader.load_module()
 
-jobinfo_loader = importlib.machinery.SourceFileLoader('jobinfo', os.path.join(test_script_dir, '../jobinfo'))
+jobinfo_loader = importlib.machinery.SourceFileLoader(
+    'jobinfo', os.path.join(test_script_dir, '../jobinfo')
+)
 jobinfo = jobinfo_loader.load_module()
 
 # Structure to represent return values for subprocess and requests calls.
@@ -37,8 +41,10 @@ def sacct_output(jobid):
 
     with open(os.path.join(DATA_DIR, SACCT_FILE), 'rb') as sacct_file:
         sacct_lines = sacct_file.readlines()
-    jobid_lines = [line for line in sacct_lines if line.split(b'\xe2\x98\x83')[0].split(b'.')[0] == jobid]
-    return Subprocess(stdout = jobid_lines)
+    jobid_lines = [
+        line for line in sacct_lines if line.split(b'\xe2\x98\x83')[0].split(b'.')[0] == jobid
+    ]
+    return Subprocess(stdout=jobid_lines)
 
 
 def squeue_output(jobid):
@@ -48,7 +54,7 @@ def squeue_output(jobid):
 
     squeue_line = re.search(f'{jobid}.*\n', squeue_lines).group(0).strip().split('|', 1)[1]
     print(squeue_lines)
-    return Subprocess(stdout = io.BytesIO(squeue_line.encode('UTF-8')))
+    return Subprocess(stdout=io.BytesIO(squeue_line.encode('UTF-8')))
 
 
 def sstat_output(jobid):
@@ -60,7 +66,7 @@ def sstat_output(jobid):
         line for line in sstat_lines
         # only select lines for which the first field matches jobid or jobid.batch
         if line.split(b'|')[0].decode() in jobid.split(',')]
-    return Subprocess(stdout = jobid_lines)
+    return Subprocess(stdout=jobid_lines)
 
 
 def scontrol_show_nodes_output(node):
@@ -68,7 +74,7 @@ def scontrol_show_nodes_output(node):
     with open(os.path.join(DATA_DIR, SCONTROL_FILE), 'r') as nodes_file:
         nodes_lines = nodes_file.read()
     node_line = re.search(f'NodeName={node}.*\n', nodes_lines).group(0).strip().encode('UTF-8')
-    return Subprocess(stdout = io.BytesIO(node_line))
+    return Subprocess(stdout=io.BytesIO(node_line))
 
 
 def popen_side_effect(*args, **kwargs):
@@ -102,41 +108,44 @@ def test_jobinfo(jobid, mocker):
     '''Test jobinfo on a given jobid.'''
     mocker.patch('subprocess.Popen', side_effect=popen_side_effect)
     mocker.patch('os.getuid', return_value=0)
-    mocker.patch('requests.get', return_value=Request(content=b'{"data":{"result":[{"values":' + GPU_USAGE_VALUES + b'}]}}'))
+    mocker.patch(
+        'requests.get',
+        return_value=Request(content=b'{"data":{"result":[{"values":' + GPU_USAGE_VALUES + b'}]}}')
+    )
     jobinfo.main(jobid)
 
-# TODO: implement more fine-grained (unit) tests for different functions.
-def test_parse_gpu_string():
-    assert jobinfo.parse_gpu_string('mycluster-gpunode42') == ['mycluster-gpunode42']
-    assert jobinfo.parse_gpu_string('mycluster-gpu[01-05]') == ['mycluster-gpu0' + str(i) for i in range(1,6)]
-    assert jobinfo.parse_gpu_string('mycluster-gpu[01-03,40-42]') == ['mycluster-gpu01', 'mycluster-gpu02', 'mycluster-gpu03',
-                                                                      'mycluster-gpu40', 'mycluster-gpu41', 'mycluster-gpu42']
+
+@pytest.mark.parametrize(
+    'test_input, expected',
+    [
+        ('mycluster-gpunode42', ['mycluster-gpunode42']),
+        ('mycluster-gpu[01-05]', ['mycluster-gpu0' + str(i) for i in range(1, 6)]),
+        ('mycluster-gpu[01-03,40-42]', ['mycluster-gpu01', 'mycluster-gpu02', 'mycluster-gpu03',
+                                        'mycluster-gpu40', 'mycluster-gpu41', 'mycluster-gpu42']),
+    ]
+)
+def test_parse_gpu_string(test_input, expected):
+    assert jobinfo.parse_gpu_string(test_input) == expected
 
 
-def test_get_gpu_usage(mocker):
-    usage = b'[[0, 0], [1, 0], [2, 0], [3, 0]]' # 0%
-    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
+@pytest.mark.parametrize(
+    'gpu_usage_samples, expected_total_usage',
+    [
+        (b'[[0, 0], [1, 0], [2, 0], [3, 0]]', 0),
+        (b'[[0, 0], [1, 100], [2, 100], [3, 0]]', 50),
+        (b'[[0, 100], [1, 100], [2, 100], [3, 100]]', 100),
+        (b'[]', -1),
+    ]
+)
+def test_get_gpu_usage(gpu_usage_samples, expected_total_usage, mocker):
+    ret_value_content = b'{"data":{"result":[{"values":' + gpu_usage_samples + b'}]}}'
     mocker.patch('requests.get', return_value=Request(content=ret_value_content))
-    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == 0
-
-    usage = b'[[0, 0], [1, 100], [2, 100], [3, 0]]' # 50%
-    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
-    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
-    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == 50
-
-    usage = b'[[0, 100], [1, 100], [2, 100], [3, 100]]' # 100%
-    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
-    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
-    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == 100
-
-    usage = b'[]' # no data -> should return -1
-    ret_value_content = b'{"data":{"result":[{"values":' + usage + b'}]}}'
-    mocker.patch('requests.get', return_value=Request(content=ret_value_content))
-    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == -1
+    assert jobinfo.get_gpu_usage('dummy', 'start', 'end') == expected_total_usage
 
 
 def test_get_gpus_usage(mocker):
     usage1 = b'[[0, 0], [1, 100], [2, 100], [3, 0]]' # 50%
     ret_value_content = b'{"data":{"result":[{"values":' + usage1 + b'}]}}'
     mocker.patch('requests.get', return_value=Request(content=ret_value_content))
-    assert jobinfo.get_gpus_usage('my-gpu[01-02]', 'start', 'end') == [('my-gpu01', 50), ('my-gpu02', 50)]
+    expected = [('my-gpu01', 50), ('my-gpu02', 50)]
+    assert jobinfo.get_gpus_usage('my-gpu[01-02]', 'start', 'end') == expected
