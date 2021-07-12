@@ -406,24 +406,26 @@ def get_max_node(xs, parameter):
     maxpertask = "per node"
     maxnode = ""
     for row in xs:
-       value = row[FIELD_NAMES.index(parameter)]
-       node = row[FIELD_NAMES.index(parameter+'Node')]
-       if (row[FIELD_NAMES.index('NTasks')] > 1):
-          pertask = "per task"
-       else:
-          pertask = "per node"
-       if (value > maxvalue):
-          maxvalue = value
-          maxpertask = pertask
-          maxnode = node
-    if maxvalue==0:
-       maxnode = "Node unknown"
-       maxpertask = "N/A"
+        value = row[FIELD_NAMES.index(parameter)]
+        node = row[FIELD_NAMES.index(parameter+'Node')]
+        if row[FIELD_NAMES.index('NTasks')] > 1:
+            pertask = "per task"
+        else:
+            pertask = "per node"
+        if value > maxvalue:
+            maxvalue = value
+            maxpertask = pertask
+            maxnode = node
+    if maxvalue == 0:
+        maxnode = "Node unknown"
+        maxpertask = "N/A"
     return (maxnode, maxpertask)
 
 
 def get_values(jobid):
-    sacct_cmd = ['sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid]
+    sacct_cmd = [
+        'sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid
+    ]
     info = subprocess.Popen(
         map(lambda s: s.encode('utf-8'), sacct_cmd),
         stdout=subprocess.PIPE)
@@ -505,9 +507,9 @@ def get_gpu_usage(node, start, end):
         values += json.loads(data.content.decode())['data']['result'][gpu]['values']
 
     if len(values) > 0:
-       average = sum([int(i[1]) for i in values]) / len(values)
+        average = sum([int(i[1]) for i in values]) / len(values)
     else:
-       average = -1
+        average = -1
     return average
 
 
