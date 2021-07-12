@@ -57,9 +57,7 @@ def sstat_output(jobid):
         sstat_lines = sstat_file.readlines()
 
     jobid_lines = [
-        # remove first field, as jobinfo doesn't expect the job id to be there
-        line.split(b'|', 1)[1]
-        for line in sstat_lines
+        line for line in sstat_lines
         # only select lines for which the first field matches jobid or jobid.batch
         if line.split(b'|')[0].decode() in jobid.split(',')]
     return Subprocess(stdout = jobid_lines)
