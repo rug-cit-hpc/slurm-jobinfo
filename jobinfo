@@ -240,16 +240,16 @@ def f_state(x, meta):
 
 
 def get_total_memory_request(memory_spec, ncpus, nnodes):
-   # Convert memory_spec to bytes, ignoring the c or n at the end
-   memory_req = byte_size(memory_spec[:-1])
+    # Convert memory_spec to bytes, ignoring the c or n at the end
+    memory_req = byte_size(memory_spec[:-1])
 
-   # If the memory request was per core, multiply by the number of cpus used
-   # otherwise multiply by the number of nodes
-   if memory_spec[-1] == 'c':
-      memory_req = memory_req*ncpus
-   else:
-      memory_req = memory_req*nnodes
-   return memory_req
+    # If the memory request was per core, multiply by the number of cpus used
+    # otherwise multiply by the number of nodes
+    if memory_spec[-1] == 'c':
+        memory_req = memory_req*ncpus
+    else:
+        memory_req = memory_req*nnodes
+    return memory_req
 
 
 def get_cpus_node(nodenames):
@@ -280,25 +280,25 @@ def get_hints(meta):
     ncpus = meta.ncpus
     eff = 100 * cputime_secs / (ncpus * walltime_secs)
     if (eff < 75):
-      if (ncpus == 1):
-          hints.append(
-              ["The program efficiency is low.",
-               "Check the file in- and output pattern of your application."]
-          )
-      elif (eff <= (100.0 / ncpus)):
-          hints.append(
-              ["The program efficiency is very low. Your program does not seem to run in",
-               "parallel. Please check the program documentation to see how to make the",
-               "program run in parallel.",
-               "If you can't find information about this, the program will not run in", 
-               "parallel! Stop requesting multiple CPU cores if that is the case."]
-          )
-      else:
-          hints.append(
-              ["The program efficiency is low. Your program is not using the assigned cores",
-               "effectively. Please check if you are using all the cores you requested.",
-               "You may also need to check the file in- and output pattern of your program."]
-          )
+        if (ncpus == 1):
+            hints.append(
+                ["The program efficiency is low.",
+                 "Check the file in- and output pattern of your application."]
+            )
+        elif (eff <= (100.0 / ncpus)):
+            hints.append(
+                ["The program efficiency is very low. Your program does not seem to run in",
+                 "parallel. Please check the program documentation to see how to make the",
+                 "program run in parallel.",
+                 "If you can't find information about this, the program will not run in",
+                 "parallel! Stop requesting multiple CPU cores if that is the case."]
+            )
+        else:
+            hints.append(
+                ["The program efficiency is low. Your program is not using the assigned cores",
+                 "effectively. Please check if you are using all the cores you requested.",
+                 "You may also need to check the file in- and output pattern of your program."]
+            )
     # Memory efficiency
     # Calculate the average number of cores per node used
     cores_per_node = ncpus / meta.NNodes
@@ -312,8 +312,8 @@ def get_hints(meta):
     # per core has been left unused
         if (meta.TRESUsageInTot[0]/req_memory) < 0.75 and (req_memory - meta.TRESUsageInTot[0]) > min_memory:
             hints.append(
-               ["You requested much more memory than your program used.",
-                "Please reduce the requested amount of memory."]
+                ["You requested much more memory than your program used.",
+                 "Please reduce the requested amount of memory."]
             )
 
     if len(hints)>0:
