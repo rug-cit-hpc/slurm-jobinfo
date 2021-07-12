@@ -386,7 +386,10 @@ FIELD_CTORS = [f.ctor for f in FIELDS]
 FIELD_COMB = [f.combinator for f in FIELDS]
 FORMAT_STR = "--format=%s" % (",".join(FIELD_NAMES))
 FORMAT_LIVE_STR = "--format=%s" % (",".join(FIELD_NAMES_LIVE))
-Meta = NT('Meta', FIELD_NAMES + ['MaxMemPerTask', 'MaxDiskWritePerTask', 'MaxDiskReadPerTask', 'dependencies', 'reason'])
+Meta = NT(
+    'Meta',
+    FIELD_NAMES + ['MaxMemPerTask', 'MaxDiskWritePerTask', 'MaxDiskReadPerTask', 'dependencies', 'reason']
+)
 
 
 def combine(xs):
