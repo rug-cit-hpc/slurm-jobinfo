@@ -207,16 +207,38 @@ def test_get_gpus_usage(mocker):
         ({'Partition': 'gpu'}, []),
         # Set memory usage to a very low value
         ({'TRESUsageInTot': (100*1024**2, 0), 'ReqMem': '10Gc'}, [MEMORY_HINT]),
-        # Request 4x4 GB in total, only use 8 GB: below the total threshold and per-core threshold
-        ({'ncpus': 4, 'ReqMem': '4Gc' ,'TRESUsageInTot': (8*1024**3, 0)}, [MEMORY_HINT]),
-        # Request 4x4 GB in total, only use 11 GB: below the total threshold, but above the per-core one
-        ({'ncpus': 4, 'ReqMem': '4Gc' ,'TRESUsageInTot': (11*1024**3, 0)}, []),
+        # Request 4x4 GB in total, only use 8 GB: violates the total and per-core threshold
+        ({'ncpus': 4, 'ReqMem': '4Gc', 'TRESUsageInTot': (8*1024**3, 0)}, [MEMORY_HINT]),
+        # Request 4x4 GB in total, only use 11 GB: violates only the total threshold
+        ({'ncpus': 4, 'ReqMem': '4Gc', 'TRESUsageInTot': (11*1024**3, 0)}, []),
         # Request 1 core, but only use it for 70%
         ({'ncpus': 1, 'elapsed': '01:00:00', 'TotalCPU': '00:30:00'}, [CPU_HINTS[0]]),
         # Request 10 core, but only use one (10%)
         ({'ncpus': 10, 'elapsed': '01:00:00', 'TotalCPU': '01:00:00'}, [CPU_HINTS[1]]),
         # Request 10 core, but only use them about half of the time
         ({'ncpus': 10, 'elapsed': '01:00:00', 'TotalCPU': '05:00:00'}, [CPU_HINTS[2]]),
+        # Test some combinations of CPU and memory hints
+        (
+            {
+                'TRESUsageInTot': (100*1024**2, 0), 'ReqMem': '10Gc',
+                'ncpus': 1, 'elapsed': '01:00:00', 'TotalCPU': '00:30:00'
+            },
+            [MEMORY_HINT, CPU_HINTS[0]]
+        ),
+        (
+            {
+                'ncpus': 4, 'ReqMem': '4Gc', 'TRESUsageInTot': (8*1024**3, 0),
+                'elapsed': '01:00:00', 'TotalCPU': '01:00:00'
+            },
+            [MEMORY_HINT, CPU_HINTS[1]]
+        ),
+        (
+            {
+                'TRESUsageInTot': (100*1024**2, 0), 'ReqMem': '10Gc', 'ncpus': 10,
+                'elapsed': '01:00:00', 'TotalCPU': '05:00:00'
+            },
+            [MEMORY_HINT, CPU_HINTS[2]]
+        ),
     ],
 )
 def test_hints(job_fields, expected_hints, mocker, capfd):
