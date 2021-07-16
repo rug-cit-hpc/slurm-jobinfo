@@ -306,10 +306,10 @@ def get_hints(meta):
     req_memory = get_total_memory_request(meta.ReqMem, ncpus, meta.NNodes)
     # If we have requested a full node, don't bother because all the memory is available.
     if cores_per_node < cores_max_node:
-    # Check if more than 80% of the memory has been used and that less than MIN_MEMORY
+    # Check if at least 75% of the memory has been used and that less than MIN_MEMORY
     # per core has been left unused
         if ((meta.TRESUsageInTot[0]/req_memory) < 0.75
-                and (req_memory - meta.TRESUsageInTot[0]) > MIN_MEMORY):
+                and (req_memory - meta.TRESUsageInTot[0]) > (MIN_MEMORY * ncpus)):
             hints.append(
                 ["You requested much more memory than your program used.",
                  "Please reduce the requested amount of memory."]
