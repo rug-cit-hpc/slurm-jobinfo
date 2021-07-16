@@ -36,6 +36,50 @@ Request = namedtuple('Request', ['content'])
 # GPU usage values for mocked call to Prometheus
 GPU_USAGE_VALUES = b'[[0,"50"], [1,"100"]]'
 
+# Job structure for tests
+testjob = jobinfo.Meta(
+    JobID=123,
+    JobName='test',
+    User='testuser',
+    Partition='cpu',
+    NodeList='test-node[001-003]',
+    NNodes=3,
+    ncpus=6,
+    NTasks=3,
+    State='RUNNING',
+    Submit='2020-01-01T11:00:00',
+    start='2020-01-01T12:00:00',
+    end='2020-01-01T13:00:00',
+    timelimit='01:00:00',
+    elapsed='01:00:00',
+    TotalCPU='06:00:00',
+    UserCPU=1,
+    SystemCPU=1,
+    ReqMem='1Gn',
+    MaxRSS='1G',
+    TRESUsageInTot=(6*1024**3, 0),
+    TRESUsageOutTot='',
+    MaxDiskWrite='',
+    MaxDiskRead='',
+    MaxRSSNode='',
+    MaxDiskWriteNode='',
+    MaxDiskReadNode='',
+    Comment='',
+    MaxMemPerTask='',
+    MaxDiskWritePerTask='',
+    MaxDiskReadPerTask='',
+    dependencies='',
+    reason='',
+)
+
+CPU_HINTS = [
+    "Check the file in- and output pattern of your application.",
+    "The program efficiency is very low.",
+    "The program efficiency is low. Your program is not using the assigned cores",
+]
+MEMORY_HINT = "You requested much more memory than your program used."
+
+
 def sacct_output(jobid):
     '''Mock call to sacct by reading from a file.'''
 
@@ -149,3 +193,41 @@ def test_get_gpus_usage(mocker):
     mocker.patch('requests.get', return_value=Request(content=ret_value_content))
     expected = [('my-gpu01', 50), ('my-gpu02', 50)]
     assert jobinfo.get_gpus_usage('my-gpu[01-02]', 'start', 'end') == expected
+
+
+@pytest.mark.parametrize(
+    'job_fields, expected_hints',
+    [
+        # No hints for jobs without an end time
+        ({'end': 'UNKNOWN'}, []),
+        # No hints for short jobs or ones without CPU time
+        ({'elapsed': '00:01:00'}, []),
+        ({'TotalCPU': '00:00:00'}, []),
+        # No hints for GPU jobs
+        ({'Partition': 'gpu'}, []),
+        # Set memory usage to a very low value
+        ({'TRESUsageInTot': (100*1024**2, 0), 'ReqMem': '10Gc'}, [MEMORY_HINT]),
+        # Request 4x4 GB in total, only use 8 GB: below the total threshold and per-core threshold
+        ({'ncpus': 4, 'ReqMem': '4Gc' ,'TRESUsageInTot': (8*1024**3, 0)}, [MEMORY_HINT]),
+        # Request 4x4 GB in total, only use 11 GB: below the total threshold, but above the per-core one
+        ({'ncpus': 4, 'ReqMem': '4Gc' ,'TRESUsageInTot': (11*1024**3, 0)}, []),
+        # Request 1 core, but only use it for 70%
+        ({'ncpus': 1, 'elapsed': '01:00:00', 'TotalCPU': '00:30:00'}, [CPU_HINTS[0]]),
+        # Request 10 core, but only use one (10%)
+        ({'ncpus': 10, 'elapsed': '01:00:00', 'TotalCPU': '01:00:00'}, [CPU_HINTS[1]]),
+        # Request 10 core, but only use them about half of the time
+        ({'ncpus': 10, 'elapsed': '01:00:00', 'TotalCPU': '05:00:00'}, [CPU_HINTS[2]]),
+    ],
+)
+def test_hints(job_fields, expected_hints, mocker, capfd):
+    mocker.patch('subprocess.Popen', side_effect=popen_side_effect)
+
+    mytestjob = testjob._replace(**job_fields)
+    jobinfo.get_hints(mytestjob)
+    stdout, stderr = capfd.readouterr()
+    for hint in expected_hints:
+        assert hint in stdout
+
+    non_expected_hints = set(CPU_HINTS + [MEMORY_HINT]).difference(expected_hints)
+    for hint in non_expected_hints:
+        assert hint not in stdout
