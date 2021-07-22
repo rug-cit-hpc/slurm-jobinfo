@@ -10,15 +10,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: set up Python
+    - name: Set up Python
       uses: actions/setup-python@v1
       with:
         python-version: ${{matrix.python}}
         architecture: x64
 
-    - name: install Python packages
+    - name: Install Python packages
       run: |
         pip install pytest pytest-mock requests
 
-    - name: run tests
+    - name: Run tests
       run: pytest -v $PWD/test
