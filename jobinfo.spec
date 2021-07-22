@@ -1,5 +1,5 @@
 Name: jobinfo
-Version: 1.4.1
+Version: 2.0.0
 Release: 1%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
@@ -40,6 +40,12 @@ install pynumparser.py %{buildroot}%{python3_sitelib}
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Jul 22 2021 Bob Dröge <b.e.droge@rug.nl> - 2.0.0
+- Move from Python 2 to Python 3
+- Build RPM packages for both EL7 and EL8
+- Many improvements for GPU, disk, and memory usage reporting
+- Add pytest test suite (and run it automatically as GitHub Action)
+
 * Wed Sep 23 2020 Bob Dröge <b.e.droge@rug.nl> - 1.4.1
 - Fix unicode issue, which somehow caused issues for the Slurm epilog.
 
