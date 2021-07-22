@@ -6,14 +6,13 @@ The following subsections explain which commands should be run on your cluster t
 
 ## sacct
 ```
-sacct --format=JobID,JobName,User,Partition,NodeList,NNodes,ncpus,State,Submit,start,end,timelimit,elapsed,TotalCPU,UserCPU,SystemCPU,ReqMem,MaxRSS,MaxDiskWrite,MaxDiskRead,MaxRSSNode,MaxDiskWriteNode,MaxDiskReadNode,Comment --parsable --noheader --delimiter=☃ -j <jobid> > sacct.txt
+sacct --format=JobID,JobName,User,Partition,NodeList,NNodes,ncpus,NTasks,State,Submit,start,end,timelimit,elapsed,TotalCPU,UserCPU,SystemCPU,ReqMem,MaxRSS,TRESUsageInTot,TRESUsageOutTot,MaxDiskWrite,MaxDiskRead,MaxRSSNode,MaxDiskWriteNode,MaxDiskReadNode,Comment --parsable --noheader --delimiter=☃ -j <jobid> > sacct.txt
 ```
 
 ## sstat
 ```
-sstat --format=JobID,MaxRSS,MaxDiskWrite,MaxDiskRead,MaxRSSNode,MaxDiskWriteNode,MaxDiskReadNode --parsable --noheader -a -j <jobid>,<jobid.batch> > sstat.txt
+sstat --format=JobID,NTasks,MaxRSS,MaxDiskWrite,MaxDiskRead,MaxRSSNode,MaxDiskWriteNode,MaxDiskReadNode --parsable --noheader -a -j <jobid>,<jobid.batch> > sstat.txt
 ```
-N.B. Compared to the jobinfo script, this also adds the job id. The test script will cut it off before passing the data to jobinfo.
 
 ## scontrol
 ```

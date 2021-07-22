@@ -23,12 +23,13 @@ import subprocess
 import sys
 import time
 
+
 # Parameters affecting when hints about job performance will be given.
-min_walltime = 180          # Minimum walltime needed before printing job hints
-min_memory = 2*1024**3      # Minimum request that will be ignored
-ignore_partitions = ['gpu', 'gpushort'] # Partitions for which to ignore memory and cpu usage, e.g. GPU partitions
-                            # where GPU usage is more important, or where full or partial 
-                            # nodes are allocated anyway.
+MIN_WALLTIME = 180          # Minimum walltime needed before printing job hints
+MIN_MEMORY = 1.5*1024**3      # Minimum amount of memory that may be left unused per core
+IGNORE_PARTITIONS = ['gpu', 'gpushort'] # Partitions for which to ignore memory and cpu usage,
+                            # e.g. GPU partitions where GPU usage is more important,
+                            # or where full or partial nodes are allocated anyway.
 
 # pynumparser should have been installed to /usr/lib.
 # However, if another Python version is loaded as module,
@@ -39,6 +40,7 @@ try:
 except ImportError:
     sys.path.append(f'/usr/lib/python3.{sys.version_info.minor}/site-packages/')
     import pynumparser
+
 
 def append(l, x):
     if l == '':
@@ -68,6 +70,38 @@ def time_min(a, b):
     return max(a, b)
 
 
+def maxtot(a, b):
+    c = max(a[0], b[0])
+    d = a[1] + b[1]
+    return (c, d)
+
+
+def add(a, b):
+    return a + b
+
+
+def tres_mem(s=None):
+    if s is None:
+        return 0.0
+    memval = byte_size(re.search(r'(?<=,mem=)([0-9\.]+[KMGTPE]?)(,)', s).group(1))
+    return memval
+
+
+def tres_disk(s=None):
+    if s is None:
+        return 0.0
+    memval = byte_size(re.search(r'(?<=,fs\/disk=)([0-9\.]+[KMGTPE]?)', s).group(1))
+    return memval
+
+
+def tres_mem_d(s=None):
+    if s is None:
+        return (0.0, 0.0)
+    memval = byte_size(re.search(r'(?<=,mem=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
+    diskval = byte_size(re.search(r'(?<=,fs\/disk=)([0-9\.]+[KMGTPE]?)([,$])', s).group(1))
+    return (memval, diskval)
+
+
 def byte_size(s=None):
     if s is None or s == "16?":
         return 0.0
@@ -90,12 +124,10 @@ def format_bs(x):
     return "%.2f%s" % (x / 2**(10 * e), postfix[e])
 
 
-# Format: [DD-[hh:]]mm:ss
-time_parts = re.compile(r'(((?P<days>\d+)-)?(?P<hours>\d\d):)?' +
-                        r'(?P<minutes>\d\d):(?P<seconds>\d\d(\.\d+)?)')
-
-
 def parse_time(t):
+    # Format: [DD-[hh:]]mm:ss
+    time_parts = re.compile(r'(((?P<days>\d+)-)?(?P<hours>\d\d):)?' +
+                            r'(?P<minutes>\d\d):(?P<seconds>\d\d(\.\d+)?)')
     m = time_parts.match(t)
     if m is None:
         return 0.0, 0, 0, 0
@@ -112,15 +144,33 @@ def elapsed_to_seconds(elapsed):
 
 
 def f_rss(x, meta):
-    return "%s (%s)" % (format_bs(x), meta.MaxRSSNode)
+    return "%s (%s, %s)" % (format_bs(x), meta.MaxRSSNode, meta.MaxMemPerTask)
+
+
+def f_tres_i(x, meta):
+    if "RUNNING" in meta.State:
+        return "%s (Until last completed step)\n" \
+               "Total Disk Read     : %s (Until last completed step)" % (
+                   format_bs(x[0]), format_bs(x[1])
+               )
+    else:
+        return "%s\n" \
+               "Total Disk Read     : %s" % (format_bs(x[0]), format_bs(x[1]))
+
+
+def f_tres_o(x, meta):
+    if "RUNNING" in meta.State:
+        return "%s (Until last completed step)\n" % format_bs(x)
+    else:
+        return "%s" % format_bs(x)
 
 
 def f_dw(x, meta):
-    return "%s (%s)" % (format_bs(x), meta.MaxDiskWriteNode)
+    return "%s (%s, %s)" % (format_bs(x), meta.MaxDiskWriteNode, meta.MaxDiskWritePerTask)
 
 
 def f_dr(x, meta):
-    return "%s (%s)" % (format_bs(x), meta.MaxDiskReadNode)
+    return "%s (%s, %s)" % (format_bs(x), meta.MaxDiskReadNode, meta.MaxDiskReadPerTask)
 
 
 def f_cpu(x, meta):
@@ -186,21 +236,24 @@ def f_state(x, meta):
         deps = " (%s)" % deps
     return ','.join(states) + reason + deps
 
-def memory_to_bytes(memory_spec, cores_per_node):
-   # Convert memory_spec to bytes, ignoring the c or n at the end
-   memory_req = byte_size(memory_spec[:-1])
 
-   # If the memory request was per core, multiply by the average number of cores
-   # This is the best we can do given the lack of detailed information
-   if memory_spec[-1] == 'c':
-      memory_req = memory_req*cores_per_node
-   return memory_req
+def get_total_memory_request(memory_spec, ncpus, nnodes):
+    # Convert memory_spec to bytes, ignoring the c or n at the end
+    memory_req = byte_size(memory_spec[:-1])
+
+    # If the memory request was per core, multiply by the number of cpus used
+    # otherwise multiply by the number of nodes
+    if memory_spec[-1] == 'c':
+        memory_req = memory_req*ncpus
+    else:
+        memory_req = memory_req*nnodes
+    return memory_req
 
 
 def get_cpus_node(nodenames):
     nodename = nodenames.split(',')[-1]
     info = subprocess.Popen(['scontrol', 'show', '-o', 'node', nodename], stdout=subprocess.PIPE)
-    num_cpus_match = re.search('cpu=(\d+)', info.stdout.read().decode('UTF-8'))
+    num_cpus_match = re.search(r'cpu=(\d+)', info.stdout.read().decode('UTF-8'))
     if num_cpus_match:
         return int(num_cpus_match.group(1))
     else:
@@ -211,13 +264,12 @@ def get_hints(meta):
     if meta.end.lower() == 'unknown':
         return
 
-    # Ignore jobs without or too little time
     cputime_secs = elapsed_to_seconds(meta.TotalCPU)
     walltime_secs = elapsed_to_seconds(meta.elapsed)
     # Ignore jobs without or too little time
-    if cputime_secs == 0 or walltime_secs < min_walltime:
+    if cputime_secs == 0 or walltime_secs < MIN_WALLTIME:
         return
-    if meta.Partition in ignore_partitions:
+    if meta.Partition in IGNORE_PARTITIONS:
         return
 
     hints = []
@@ -225,48 +277,54 @@ def get_hints(meta):
     # CPU efficiency
     ncpus = meta.ncpus
     eff = 100 * cputime_secs / (ncpus * walltime_secs)
-    if (eff < 75):
-      if (ncpus == 1):
-          hints.append(
-              ["The program efficiency is low.",
-               "Check the file in- and output pattern of your application."]
-          )
-      elif (eff <= (100.0 / ncpus)):
-          hints.append(
-              ["The program efficiency is very low. Your program does not seem to run in",
-               "parallel. Please check the program documentation to see how to make the",
-               "program run in parallel.",
-               "If you can't find information about this, the program will not run in", 
-               "parallel! Stop requesting multiple CPU cores if that is the case."]
-          )
-      else:
-          hints.append(
-              ["The program efficiency is low. Your program is not using the assigned cores",
-               "effectively. Please check if you are using all the cores you requested.",
-               "You may also need to check the file in- and output pattern of your program."]
-          )
-    # Memory efficiency
-    max_memory = meta.MaxRSS
-    cores_per_node = ncpus / meta.NNodes
-    req_memory = memory_to_bytes(meta.ReqMem, cores_per_node)
-    cores_max_node = get_cpus_node(meta.MaxRSSNode)
-    if req_memory > min_memory*cores_per_node and cores_per_node < cores_max_node:
-        if (max_memory/req_memory) < 0.5:
+    if eff < 75:
+        if ncpus == 1:
             hints.append(
-               ["You requested much more memory than your program used.",
-                "Please reduce the requested amount of memory."]
+                ["The program efficiency is low.",
+                 "Check the file in- and output pattern of your application."]
+            )
+        elif eff <= (100.0 / ncpus):
+            hints.append(
+                ["The program efficiency is very low. Your program does not seem to run in",
+                 "parallel. Please check the program documentation to see how to make the",
+                 "program run in parallel.",
+                 "If you can't find information about this, the program will not run in",
+                 "parallel! Stop requesting multiple CPU cores if that is the case."]
+            )
+        else:
+            hints.append(
+                ["The program efficiency is low. Your program is not using the assigned cores",
+                 "effectively. Please check if you are using all the cores you requested.",
+                 "You may also need to check the file in- and output pattern of your program."]
+            )
+    # Memory efficiency
+    # Calculate the average number of cores per node used
+    cores_per_node = ncpus / meta.NNodes
+    # Find the total number of cores for the node used
+    cores_max_node = get_cpus_node(meta.MaxRSSNode)
+    # Calculate the total amount of memory requested
+    req_memory = get_total_memory_request(meta.ReqMem, ncpus, meta.NNodes)
+    # If we have requested a full node, don't bother because all the memory is available.
+    if cores_per_node < cores_max_node:
+    # Check if at least 75% of the memory has been used and that less than MIN_MEMORY
+    # per core has been left unused
+        if ((meta.TRESUsageInTot[0]/req_memory) < 0.75
+                and (req_memory - meta.TRESUsageInTot[0]) > (MIN_MEMORY * ncpus)):
+            hints.append(
+                ["You requested much more memory than your program used.",
+                 "Please reduce the requested amount of memory."]
             )
 
-    if len(hints)>0:
+    if len(hints) > 0:
         print("Hints and tips      :")
         hint_number = 1
         for hint in hints:
             hint_line = 1
             for line in hint:
                 if hint_line == 1:
-                    print (" %i) %s" % (hint_number, line))
+                    print(" %i) %s" % (hint_number, line))
                 else:
-                    print ("    %s" % line)
+                    print("    %s" % line)
                 hint_line = hint_line + 1
             hint_number = hint_number + 1
         print(" *) For more information on these issues see:")
@@ -291,13 +349,14 @@ def whoami():
 
 Field = NT('Field', 'name ctor combinator shown prefer_live formatter desc')
 FIELDS = [
-        Field("JobID",               str,        keep_first,   True,  False, f_str,     "Job ID"),
+        Field("JobID",               str,        keep_first,   True,  True,  f_str,     "Job ID"),
         Field("JobName",             str,        keep_first,   True,  False, f_str,     "Name"),
         Field("User",                str,        keep_first,   True,  False, f_str,     "User"),
         Field("Partition",           str,        keep_first,   True,  False, f_str,     "Partition"),
         Field("NodeList",            str,        keep_first,   True,  False, f_str,     "Nodes"),
         Field("NNodes",              int,        max,          True,  False, f_str,     "Number of Nodes"),
         Field("ncpus",               int,        max,          True,  False, f_str,     "Cores"),
+        Field("NTasks",              int,        max,          True,  True,  f_str,     "Number of Tasks"),
         Field("State",               str,        append,       True,  False, f_state,   "State"),
         Field("Submit",              str,        keep_first,   True,  False, f_str,     "Submit"),
         Field("start",               date_str,   min,          True,  False, f_date,    "Start"),
@@ -308,23 +367,28 @@ FIELDS = [
         Field("UserCPU",             str,        max,          True,  False, f_cpu,     "% User (Computation)"),
         Field("SystemCPU",           str,        max,          True,  False, f_cpu,     "% System (I/O)"),
         Field("ReqMem",              str,        keep_first,   True,  False, f_mem,     "Mem reserved"),
-        Field("MaxRSS",              byte_size,  max,          True,  True,  f_rss,     "Max Mem used"),
-        Field("MaxDiskWrite",        byte_size,  max,          True,  True,  f_dw,      "Max Disk Write"),
-        Field("MaxDiskRead",         byte_size,  max,          True,  True,  f_dr,      "Max Disk Read"),
+        Field("MaxRSS",              byte_size,  max,          True,  True,  f_rss,     "Max Mem (Node/step)"),
+        Field("TRESUsageInTot",      tres_mem_d, maxtot,       True,  False, f_tres_i,  "Full Max Mem usage"),
+        Field("TRESUsageOutTot",     tres_disk,  add,          True,  False, f_tres_o,  "Total Disk Write"),
+        Field("MaxDiskWrite",        byte_size,  max,          False, True,  f_dw,      "Max Disk Write"),
+        Field("MaxDiskRead",         byte_size,  max,          False, True,  f_dr,      "Max Disk Read"),
 
-        Field("MaxRSSNode",          str,        append,       False, True,  None,      ""),
-        Field("MaxDiskWriteNode",    str,        append,       False, True,  None,      ""),
-        Field("MaxDiskReadNode",     str,        append,       False, True,  None,      ""),
+        Field("MaxRSSNode",          str,        keep_first,   False, True,  None,      ""),
+        Field("MaxDiskWriteNode",    str,        keep_first,   False, True,  None,      ""),
+        Field("MaxDiskReadNode",     str,        keep_first,   False, True,  None,      ""),
         Field("Comment",             str,        keep_first,   False, False, None,      ""),
         ]
-
 FIELD_NAMES = [f.name for f in FIELDS]
 FIELD_NAMES_LIVE = [f.name for f in FIELDS if f.prefer_live]
 FIELD_CTORS = [f.ctor for f in FIELDS]
 FIELD_COMB = [f.combinator for f in FIELDS]
 FORMAT_STR = "--format=%s" % (",".join(FIELD_NAMES))
 FORMAT_LIVE_STR = "--format=%s" % (",".join(FIELD_NAMES_LIVE))
-Meta = NT('Meta', FIELD_NAMES + ['dependencies', 'reason'])
+Meta = NT(
+    'Meta',
+    FIELD_NAMES
+    + ['MaxMemPerTask', 'MaxDiskWritePerTask', 'MaxDiskReadPerTask', 'dependencies', 'reason']
+)
 
 
 def combine(xs):
@@ -335,8 +399,31 @@ def combine(xs):
     return r
 
 
+def get_max_node(xs, parameter):
+    maxvalue = 0
+    maxpertask = "per node"
+    maxnode = ""
+    for row in xs:
+        value = row[FIELD_NAMES.index(parameter)]
+        node = row[FIELD_NAMES.index(parameter+'Node')]
+        if row[FIELD_NAMES.index('NTasks')] > 1:
+            pertask = "per task"
+        else:
+            pertask = "per node"
+        if value > maxvalue:
+            maxvalue = value
+            maxpertask = pertask
+            maxnode = node
+    if maxvalue == 0:
+        maxnode = "Node unknown"
+        maxpertask = "N/A"
+    return (maxnode, maxpertask)
+
+
 def get_values(jobid):
-    sacct_cmd = ['sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid]
+    sacct_cmd = [
+        'sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid
+    ]
     info = subprocess.Popen(
         map(lambda s: s.encode('utf-8'), sacct_cmd),
         stdout=subprocess.PIPE)
@@ -379,7 +466,7 @@ def parse_gpu_string(node_string):
     Parses a string in the format of.
     pg-gpu[1-3] or pg-gpu[2,4,5]
     """
-    match = re.search('(.+\[)([0-9]|-|,)+?(?=\])', node_string)
+    match = re.search(r'(.+\[)([0-9]|-|,)+?(?=\])', node_string)
     if match is None:
         return [node_string]
 
@@ -418,9 +505,9 @@ def get_gpu_usage(node, start, end):
         values += json.loads(data.content.decode())['data']['result'][gpu]['values']
 
     if len(values) > 0:
-       average = sum([int(i[1]) for i in values]) / len(values)
+        average = sum([int(i[1]) for i in values]) / len(values)
     else:
-       average = -1
+        average = -1
     return average
 
 
@@ -439,26 +526,40 @@ def get_gpus_usage(nodes, start, end):
 
 
 def main(jobid):
-    y = combine(get_values(jobid))
-    meta = Meta._make(y + ['', ''])
+    values = get_values(jobid)
+    (max_mem_node, MaxMemPerTask) = get_max_node(values, 'MaxRSS')
+    (max_dw_node, MaxDiskWritePerTask) = get_max_node(values, 'MaxDiskWrite')
+    (max_dr_node, MaxDiskReadPerTask) = get_max_node(values, 'MaxDiskRead')
+    y = combine(values)
+    meta = Meta._make(y + ['', '', '', '', ''])
+    meta = meta._replace(
+        MaxRSSNode=max_mem_node, MaxDiskWriteNode=max_dw_node, MaxDiskReadNode=max_dr_node
+    )
     ys = [y]
     if meta.State == "RUNNING" and (os.getuid() == 0 or meta.User == whoami()):
         # get more info from sstat
         tmp = get_live_values("%s,%s.batch" % (jobid, jobid))
         if len(tmp) != 0:
+            (max_mem_node, MaxMemPerTask) = get_max_node(tmp, 'MaxRSS')
+            (max_dw_node, MaxDiskWritePerTask) = get_max_node(tmp, 'MaxDiskWrite')
+            (max_dr_node, MaxDiskReadPerTask) = get_max_node(tmp, 'MaxDiskRead')
             ys.append(combine(tmp))
     if meta.State == "PENDING":
         info = subprocess.Popen(
             ['squeue', '--format=%E;%R', '--noheader', '-a', '-j', jobid],
             stdout=subprocess.PIPE)
-        deps, reason = info.stdout.readline().decode('utf-8').strip().split(
-            ";")
+        deps, reason = info.stdout.readline().decode('utf-8').strip().split(";")
         dependencies = deps
     else:
         dependencies = ""
         reason = ""
     y = combine(ys)
-    meta = Meta._make(y + [dependencies, reason])
+    meta = Meta._make(
+        y + [MaxMemPerTask, MaxDiskWritePerTask, MaxDiskReadPerTask,  dependencies, reason]
+    )
+    meta = meta._replace(
+        MaxRSSNode=max_mem_node, MaxDiskWriteNode=max_dw_node, MaxDiskReadNode=max_dr_node
+    )
 
     for i, (name, parse, comb, show, prefer_live, format,
             desc) in enumerate(FIELDS):
