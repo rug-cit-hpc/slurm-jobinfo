@@ -18,10 +18,12 @@ import math
 import os
 import pwd
 import re
-import requests
 import subprocess
 import sys
 import time
+
+import pynumparser
+import requests
 
 
 # Parameters affecting when hints about job performance will be given.
@@ -37,11 +39,11 @@ IGNORE_PARTITIONS = [       # Partitions for which to ignore memory and cpu usag
 # However, if another Python version is loaded as module,
 # Python may fail to find pynumparser. In this case we add it
 # to the search path manually and try again.
-try:
-    import pynumparser
-except ImportError:
-    sys.path.append(f'/usr/lib/python3.{sys.version_info.minor}/site-packages/')
-    import pynumparser
+#try:
+#    import pynumparser
+#except ImportError:
+#    sys.path.append(f'/usr/lib/python3.{sys.version_info.minor}/site-packages/')
+#    import pynumparser
 
 
 def append(l, x):
