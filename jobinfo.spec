@@ -9,7 +9,7 @@ URL: https://github.com/rug-cit-ris/slurm-jobinfo
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python3 %{py3_dist requests}
+Requires: python3 %{py3_dist requests} %{py3_dist pynumparser}
 BuildRequires:  python%{python3_pkgversion}-devel
 
 %description
@@ -25,21 +25,16 @@ jobinfo - collates job information from the 'sstat', 'sacct' and 'squeue' SLURM 
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{python3_sitelib}
 install jobinfo %{buildroot}%{_bindir}/jobinfo
-install pynumparser.py %{buildroot}%{python3_sitelib}
-
-%py_byte_compile %{__python3} %{buildroot}%{python3_sitelib}/pynumparser.py
 
 %files
 %defattr(-,root,root)
 %{_bindir}/jobinfo
-#%pycached %{python3_sitelib}/pynumparser.py
-%{python3_sitelib}/pynumparser.py
-%{python3_sitelib}/__pycache__/pynumparser.cpython-%{python3_version_nodots}*.pyc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+# - Don't install pynumparser manually, but depend on package
 * Thu Jul 22 2021 Bob Dröge <b.e.droge@rug.nl> - 2.0.0
 - Move from Python 2 to Python 3
 - Build RPM packages for both EL7 and EL8
