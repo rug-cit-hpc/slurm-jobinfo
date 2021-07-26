@@ -310,8 +310,8 @@ def get_hints(meta):
     req_memory = get_total_memory_request(meta.ReqMem, ncpus, meta.NNodes)
     # If we have requested a full node, don't bother because all the memory is available.
     if cores_per_node < cores_max_node:
-    # Check if at least 75% of the memory has been used and that less than MIN_MEMORY
-    # per core has been left unused
+        # Check if at least 75% of the memory has been used and that less than MIN_MEMORY
+        # per core has been left unused
         if ((meta.TRESUsageInTot[0]/req_memory) < 0.75
                 and (req_memory - meta.TRESUsageInTot[0]) > (MIN_MEMORY * ncpus)):
             hints.append(
@@ -429,7 +429,7 @@ def get_values(jobid):
         'sacct', FORMAT_STR, '--parsable', '--noheader', '--delimiter='+u'\u2603', '-j', jobid
     ]
     info = subprocess.Popen(
-        map(lambda s: s.encode('utf-8'), sacct_cmd),
+        list(map(lambda s: s.encode('utf-8'), sacct_cmd)),
         stdout=subprocess.PIPE)
     xs = []
     for line in info.stdout:
@@ -487,8 +487,6 @@ def get_gpu_usage(node, start, end):
       start (int): start of measurements timestamp.
       end (int): end of measurements timestamp.
     """
-
-
     payload = {
         'query':
         'utilization_gpu{{env="peregrine",instance="{}:9101",job="gpu"}}'.
@@ -597,8 +595,7 @@ def main(jobid):
 
 
 def usage(pipe):
-    usage_msg = \
-"""jobinfo - collates job information from the 'sstat', 'sacct' and
+    usage_msg = """jobinfo - collates job information from the 'sstat', 'sacct' and
 'squeue' SLURM commands to give a uniform interface for both current
 and historical jobs.
 
