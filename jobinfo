@@ -569,31 +569,6 @@ def main(jobid):
         if show:
             print("%-20s: %s" % (desc, format(val, meta)))
 
-    # for jobs in a partition named gpu*, retreive gpu usage from prometheus.
-    if meta.Partition.startswith('gpu') and meta.start != 'Unknown':
-        start = time.mktime(datetime.datetime.strptime(
-            meta.start, '%Y-%m-%dT%H:%M:%S').timetuple())
-        if meta.end == 'Unknown':
-            end = time.time()
-        else:
-            end = time.mktime(datetime.datetime.strptime(
-                meta.end, '%Y-%m-%dT%H:%M:%S').timetuple())
-        # prevent the script from crashing if anything  goes wrong.
-        # But we do want to read the exception.
-        try:
-            gpu_usages = get_gpus_usage(meta.NodeList, start, end)
-            for gpu, usage in gpu_usages:
-                if usage >= 0:
-                    print('%-20s: %.1f%% (%s)' % ('Average GPU usage', usage, gpu))
-                else:
-                    print('%-20s: No GPU metrics available (%s)' % ('Average GPU usage', gpu))
-        except Exception as e:
-            print('\nGPU usage could not be retrieved.',
-                  'The error was:\n')
-            print(e, file=sys.stderr)
-    get_hints(meta)
-
-
 def usage(pipe):
     usage_msg = \
 """jobinfo - collates job information from the 'sstat', 'sacct' and
