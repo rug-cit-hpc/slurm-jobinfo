@@ -1,5 +1,5 @@
 Name: jobinfo
-Version: 2.0.0
+Version: 2.1.0
 Release: 1%{?dist}
 Summary: Collect job information from SLURM in nicely readable format.
 
@@ -40,6 +40,10 @@ install pynumparser.py %{buildroot}%{python3_sitelib}
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Apr 05 2023 Fokke Dijkstra <f.dijkstra@rug.nl> - 2.1.0
+- First version for the new Hábrók cluster
+- Removed GPU reporting as this is not supported on Hábrók
+
 * Thu Jul 22 2021 Bob Dröge <b.e.droge@rug.nl> - 2.0.0
 - Move from Python 2 to Python 3
 - Build RPM packages for both EL7 and EL8
