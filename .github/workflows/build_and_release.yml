@@ -37,8 +37,8 @@ jobs:
           name: RPM package
           path: ${{ github.workspace }}/noarch/jobinfo*.rpm
 
-      - name: rpmbuild centos8
-        uses: ./.github/actions/rpmbuild-centos8/
+      - name: rpmbuild rockylinux8
+        uses: ./.github/actions/rpmbuild-rockylinux8/
 
       - name: upload rpm package as artifact
         uses: actions/upload-artifact@v2
